@@ -53,7 +53,7 @@ fun normalizedName(value: String): String = Normalizer.normalize(value.lowercase
 fun normalizedPhone(value: String): String = buildString {
     value.forEach { ch -> when { ch in '0'..'9' -> append(ch); ch in '০'..'৯' -> append('0'+(ch-'০')); ch=='+' && isEmpty() -> append(ch) } }
 }
-fun validPhone(value: String) = Regex("\\+?[0-9]{7,15}").matches(normalizedPhone(value))
+fun validPhone(value: String) = value.trim().matches(Regex("\\+?[0-9০-৯(][0-9০-৯\\s().-]*")) && Regex("\\+?[0-9]{7,15}").matches(normalizedPhone(value))
 fun resolveContacts(query: String, contacts: List<ContactAlias>): List<ContactAlias> {
     val q = normalizedName(query)
     if (q.isBlank()) return emptyList()

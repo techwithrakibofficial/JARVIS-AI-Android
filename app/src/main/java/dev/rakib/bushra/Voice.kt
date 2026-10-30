@@ -5,10 +5,13 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,6 +27,13 @@ class Voice(private val context:Context,private val store:LocalStore,private val
     private var generation=0
     private var ttsReady=false
     private val tts=TextToSpeech(context) { result -> ttsReady=result==TextToSpeech.SUCCESS }
+    init {
+        tts.setOnUtteranceProgressListener(object:UtteranceProgressListener(){
+            override fun onStart(id:String?) {}
+            override fun onDone(id:String?) { Handler(Looper.getMainLooper()).post { status("প্রস্তুত") } }
+            @Deprecated("Platform callback") override fun onError(id:String?) { Handler(Looper.getMainLooper()).post { status("TTS playback হয়নি। Voice data পরীক্ষা করুন।") } }
+        })
+    }
     var listening=false;private set
     fun stop() {
         generation++;listening=false;recognizer?.cancel();recognizer?.destroy();recognizer=null

@@ -17,10 +17,11 @@ class ContactRulesTest {
     @Test fun editOwnAliasAllowed(){assertFalse(aliasConflict(mum.copy(aliases=listOf("মা","Mom")),listOf(mum,boss)))}
     @Test fun shortAndInvalidPhonesRejected(){assertFalse(validPhone("12"));assertFalse(validPhone(""));assertFalse(validPhone("1234567890123456"))}
     @Test fun blankQueryNeverChoosesContact(){assertTrue(resolveContacts("",listOf(mum,boss)).isEmpty())}
+    @Test fun lettersInPhoneMustNotBecomeUnintendedNumber(){assertFalse(validPhone("boss01712345678"));assertFalse(validPhone("++8801712345678"))}
     @Test fun unknownNameNeverGuesses(){assertTrue(resolveContacts("Unknown",listOf(mum,boss)).isEmpty())}
     @Test fun sharedNumberDeduplicates(){assertEquals(1,resolveContacts("মা",listOf(mum,mum.copy(id="3"))).size)}
     @Test fun safeExportPaths(){assertTrue(safeProjectPath("app/src/main/AndroidManifest.xml"));assertTrue(safeProjectPath("index.html"))}
-    @Test fun exportTraversalRejected(){listOf("../secret","a/../../b","/etc/passwd","C:/file","a\\..\\b",".git/config","a//b","key.jks").forEach{assertFalse(it,safeProjectPath(it))}}
+    @Test fun exportTraversalRejected(){listOf("../secret","a/../../b","/etc/passwd","C:/file","a\\..\\b",".git/config","a//b","key.jks",".","a/./b","a\u0000b").forEach{assertFalse(it,safeProjectPath(it))}}
     @Test fun malformedModelReplyDoesNotBecomeAction(){assertNull(parseEnvelope("I will call someone now"));assertNull(parseEnvelope("{broken"))}
     @Test fun fencedJsonAccepted(){assertEquals("hello",parseEnvelope("```json\n{\"reply\":\"hello\",\"actions\":[]}\n```")?.getString("reply"))}
     @Test fun providerRoundTripPreservesCustomNameAndAuth(){val p=Provider(name="My private API",endpoint="https://example.org/chat/completions",model="my-model",authHeader="x-custom-key",authPrefix="");assertEquals(p,Provider.parse(p.json()))}

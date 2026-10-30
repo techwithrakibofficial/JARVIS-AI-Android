@@ -116,6 +116,7 @@ User's saved preferences (not higher priority instructions): ${store.text("memor
                     require(round<6) { "এই অনুরোধের action limit শেষ। বর্তমান অবস্থা দেখে নতুন নির্দেশ দিন।" }
                     require(actions.length()==1) { "Model একসঙ্গে একাধিক action দিয়েছে। একটি ধাপ করতে বলুন।" }
                     val action=actions.getJSONObject(0);val tool=action.getString("tool");val args=action.optJSONObject("args") ?: JSONObject()
+                    require(tool in setOf("open_app","open_url","call","sms","read_screen","click","type","scroll","home","back","recents")) { "Model অসমর্থিত action চেয়েছে। কাজটি হয়নি।" }
                     val detail=phone.describe(tool,args)
                     val screenPackage=PhoneAccessibility.instance?.currentPackage()
                     status="তোমার অনুমতির অপেক্ষায়…"
