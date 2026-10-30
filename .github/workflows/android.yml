@@ -66,13 +66,23 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
+      actions: read
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: BUSHRA-installable-APK
-          path: dist
+      - name: Download verified APK with bounded retry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 120s gh run download "$RUN_ID" --name BUSHRA-installable-APK --dir dist; then
+              break
+            fi
+          done
+          test -f dist/BUSHRA-AI.apk
       - name: Publish phone download
         env:
           GH_TOKEN: ${{ github.token }}
