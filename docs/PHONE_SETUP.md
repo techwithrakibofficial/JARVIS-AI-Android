@@ -4,7 +4,7 @@
 2. Download করা APK খুলে প্রয়োজন হলে ওই downloader/browser-এর `Install unknown apps` অনুমতি দিন।
 3. অ্যাপ খুলে data disclosure পড়ুন। কোনো API key chat বা GitHub issue-তে লিখবেন না।
 4. Settings > API provider যোগ করো > provider suggestion বাছুন। নাম নিজের মতো দিন। Endpoint, নিজের উপলব্ধ model ID ও API key দিন। OpenRouter model list আনতে `Model suggestions` ব্যবহার করতে পারেন। Model free কি না provider-এ যাচাই করুন।
-5. Test connection চাপুন, সফল হলে Save করুন ও `Use` চাপুন। API quota, model capability বা key failure হলে সেটিং বদলে পরীক্ষা করুন। কোনো paid fallback নিজে চালু হয় না।
+5. Test connection চাপুন, সফল হলে Save করুন ও `Use` চাপুন। API quota, model capability বা key failure হলে সেটিং বদলে পরীক্ষা করুন। কোনো paid fallback নিজে চালু হয় না। Chat-এর সঙ্গে সাম্প্রতিক conversation, saved memory, alias labels ও installed app names provider-এ যায়; screen text যায় শুধু আলাদা approval-এর পরে। Keys chat-এ যায় না।
 6. Voice output-এর জন্য Android TTS বিনা আলাদা API subscription-এ ব্যবহার করা যায়। পছন্দের ElevenLabs voice চাইলে ElevenLabs preset-এ আলাদা key বসান। Default voice ID `75CHIF904aWz6uq77J3P`; account access ও বাংলা voice/model support Test করে দেখুন। ElevenLabs quota/charge আলাদা।
 7. Mic চাপলে microphone permission দিন। Offline recognizer না থাকলে Settings > Network speech অনুমতি নিজের সিদ্ধান্তে চালু করুন। ফোনে recognizer/TTS language data আলাদা লাগতে পারে।
 8. Contacts > নম্বর ও ডাকনাম যোগ করুন, অথবা permission দিয়ে phone contact নির্বাচন করুন। ডাকনাম বলে বা লিখে যোগ করা যায়। আসল contact বদলায় না। একই alias আলাদা নম্বরে ব্যবহার করলে save আটকায়।

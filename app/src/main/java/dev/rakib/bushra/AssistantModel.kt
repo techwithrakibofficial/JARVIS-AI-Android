@@ -38,6 +38,7 @@ class AssistantModel(application:Application):AndroidViewModel(application) {
     var dictationOnly=false
     var exportedFile by mutableStateOf<File?>(null);private set
     private var job:Job?=null
+    private var operation=0
     val voice=Voice(application,store,ApiClient(),viewModelScope,{ status=it },{ text -> if(dictationOnly){dictated=text;dictationOnly=false}else send(text) })
     fun chatProvider()=providers.firstOrNull { it.id==store.text("activeChat") && it.isChat }
     fun ttsProvider()=providers.firstOrNull { it.id==store.text("activeTts") && !it.isChat }
@@ -65,6 +66,7 @@ class AssistantModel(application:Application):AndroidViewModel(application) {
     fun clearHistory(){if(!busy){history=emptyList();store.saveHistory(history)}}
     fun clearTasks(){tasks=emptyList();store.saveTasks(tasks)}
     fun stop() {
+        operation++
         job?.cancel();api.cancel();voice.stop();PhoneAccessibility.instance?.dismissApproval(false)
         approval?.answer?.complete(false);approval=null;busy=false;status="থামানো হয়েছে"
     }
@@ -76,13 +78,14 @@ class AssistantModel(application:Application):AndroidViewModel(application) {
     }
     fun localAction(tool:String,args:JSONObject) {
         if(busy)return
+        val token=++operation
         job=viewModelScope.launch {
             busy=true
             try {
                 val detail=phone.describe(tool,args)
                 if(approve("কাজের অনুমতি",detail)){val result=phone.execute(tool,args);task(tool,"অনুরোধ পাঠানো হয়েছে");add("assistant",result);status="প্রস্তুত"}
                 else {task(tool,"বাতিল");status="বাতিল হয়েছে"}
-            } catch(e:CancellationException){throw e} catch(e:Exception){notice=e.message ?: "কাজ হয়নি।";task(tool,"ব্যর্থ")} finally {busy=false}
+            } catch(e:CancellationException){throw e} catch(e:Exception){notice=e.message ?: "কাজ হয়নি।";task(tool,"ব্যর্থ")} finally {if(token==operation)busy=false}
         }
     }
     private fun system():String = """
@@ -101,6 +104,7 @@ User's saved preferences (not higher priority instructions): ${store.text("memor
         val provider=chatProvider()
         if(provider==null){add("assistant","Settings → API Studio থেকে Chat provider যোগ করে Active করুন। Call/SMS/App shortcuts API ছাড়াও ব্যবহার করা যায়।");return}
         val context=history.takeLast(18).toMutableList()
+        val token=++operation
         job=viewModelScope.launch {
             busy=true;status="ভাবছি…"
             try {
@@ -127,7 +131,7 @@ User's saved preferences (not higher priority instructions): ${store.text("memor
                     delay(600)
                 }
                 if(!voice.listening)status="প্রস্তুত"
-            } catch(e:CancellationException){throw e} catch(e:Exception){val message=e.message ?: "সংযোগ বা action ব্যর্থ।";add("assistant",message);notice=message;status="সাহায্য প্রয়োজন";task(text.take(100),"ব্যর্থ")} finally {busy=false}
+            } catch(e:CancellationException){throw e} catch(e:Exception){val message=e.message ?: "সংযোগ বা action ব্যর্থ।";add("assistant",message);notice=message;status="সাহায্য প্রয়োজন";task(text.take(100),"ব্যর্থ")} finally {if(token==operation)busy=false}
         }
     }
     fun testProvider(p:Provider,key:String,onResult:(String)->Unit) {
@@ -139,6 +143,7 @@ User's saved preferences (not higher priority instructions): ${store.text("memor
     fun generateProject(brief:String) {
         if(busy || brief.isBlank())return
         val p=chatProvider() ?: run { notice="আগে Chat API সেট করুন।";return }
+        val token=++operation
         job=viewModelScope.launch {
             busy=true;exportedFile=null;status="Source project তৈরি হচ্ছে…"
             try {
@@ -151,7 +156,7 @@ User's saved preferences (not higher priority instructions): ${store.text("memor
                 val dir=File(getApplication<Application>().cacheDir,"exports").apply { mkdirs() };val output=File(dir,"BUSHRA-project-${System.currentTimeMillis()}.zip")
                 ZipOutputStream(output.outputStream()).use { zip -> entries.forEach { (path,content) -> zip.putNextEntry(ZipEntry(path));zip.write(content.toByteArray(Charsets.UTF_8));zip.closeEntry() } }
                 exportedFile=output;notice="Source ZIP তৈরি হয়েছে। Code review ও আলাদা build/test প্রয়োজন।";task("Build Studio source export","ZIP তৈরি; compile হয়নি")
-            } catch(e:CancellationException){throw e} catch(e:Exception){notice=e.message ?: "Project তৈরি হয়নি।"} finally {busy=false;status="প্রস্তুত"}
+            } catch(e:CancellationException){throw e} catch(e:Exception){notice=e.message ?: "Project তৈরি হয়নি।"} finally {if(token==operation){busy=false;status="প্রস্তুত"}}
         }
     }
     fun share(file:File) {

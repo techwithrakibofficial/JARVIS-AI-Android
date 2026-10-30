@@ -33,7 +33,7 @@ val providerPresets = listOf(
     Preset("Groq", "https://api.groq.com/openai/v1/chat/completions", "", ApiProtocol.OPENAI_CHAT, "Compatible chat ও tool-capable models।"),
     Preset("DeepSeek", "https://api.deepseek.com/chat/completions", "deepseek-chat", ApiProtocol.OPENAI_CHAT, "Chat ও planning; provider quota প্রযোজ্য।"),
     Preset("xAI / Grok", "https://api.x.ai/v1/chat/completions", "", ApiProtocol.OPENAI_CHAT, "Chat। নিজের উপলব্ধ model ID দিন।"),
-    Preset("ElevenLabs", "https://api.elevenlabs.io/v1/text-to-speech", "eleven_multilingual_v2", ApiProtocol.ELEVENLABS_TTS, "শুধু voice output। Voice ও language availability Test করে নিন; chat API নয়।"),
+    Preset("ElevenLabs", "https://api.elevenlabs.io/v1/text-to-speech", "eleven_v3", ApiProtocol.ELEVENLABS_TTS, "শুধু voice output। নিজের account-এ model, voice ও language availability Test করে নিন; chat API নয়।"),
     Preset("OpenAI Speech", "https://api.openai.com/v1/audio/speech", "tts-1", ApiProtocol.OPENAI_TTS, "শুধু voice output। Voice field-এ alloy বা নিজের supported voice দিন।"),
     Preset("Custom API", "", "", ApiProtocol.OPENAI_CHAT, "নিজের নাম, HTTPS endpoint, protocol ও auth header দিন। যেকোনো নাম চলে; API-কে নির্বাচিত protocol সমর্থন করতে হবে।")
 )

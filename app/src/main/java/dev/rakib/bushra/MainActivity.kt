@@ -117,7 +117,7 @@ private val Muted=Color(0xFFADBFD1)
         }
         if(consent)AlertDialog(onDismissRequest={},title={Text("তোমার ব্যক্তিগত AI workspace")},text={Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
             Text("Chat ও voice text তোমার নির্বাচিত API provider-এ পাঠানো হবে। Cloud voice ব্যবহার করলে উত্তর ElevenLabs/নির্বাচিত voice provider-এও যাবে।")
-            Text("Contacts ও history ফোনে থাকে। Screen text AI-তে পাঠানোর আগে অনুমতি নেওয়া হয়। Microphone শুধু তোমার চাপায় চালু হয়। কোনো tracking SDK নেই।")
+            Text("History ও contacts ফোনে সংরক্ষিত থাকে। Chat-এর সঙ্গে সাম্প্রতিক কথা, saved memory, alias labels ও installed app names নির্বাচিত AI-তে যায়। Screen text পাঠানোর আগে আলাদা অনুমতি নেওয়া হয়। Microphone শুধু তোমার চাপায় চালু হয়। কোনো tracking SDK নেই।")
             Text("Call/SMS shortcuts dialer ও draft খোলে। পাঠানোর শেষ কাজ সংশ্লিষ্ট অ্যাপে করবে। Carrier charge ও provider quota প্রযোজ্য।")
         }},confirmButton={Button(onClick={vm.flag("consent",true);consent=false}){Text("বুঝেছি, শুরু করি")}})
         vm.approval?.let { request -> AlertDialog(onDismissRequest={vm.answerApproval(false)},title={Text(request.title)},text={Text(request.detail)},confirmButton={Button(onClick={vm.answerApproval(true)}){Text("অনুমতি দিন")}},dismissButton={TextButton(onClick={vm.answerApproval(false)}){Text("বাতিল")}}) }
@@ -316,6 +316,7 @@ private val Muted=Color(0xFFADBFD1)
         Field(search,{search=it},"Provider search / suggestion")
         Column(Modifier.heightIn(max=175.dp).verticalScroll(rememberScrollState())) {
             providerPresets.filter { search.isBlank() || it.name.contains(search,true) }.forEach { preset ->TextButton(onClick={draft=preset.provider().copy(id=original.id);key="";models=emptyList();result=preset.purpose},modifier=Modifier.fillMaxWidth()){Text(preset.name,modifier=Modifier.fillMaxWidth())} }
+            if(search.isNotBlank())TextButton(onClick={draft=providerPresets.last().provider().copy(id=original.id,name=search.trim());key="";models=emptyList();result="Custom API। নিচে HTTPS endpoint, protocol ও model ID দিন।"},modifier=Modifier.fillMaxWidth()){Text("Custom: $search",modifier=Modifier.fillMaxWidth())}
         }
         Field(draft.name,{draft=draft.copy(name=it)},"নিজের দেওয়া API নাম")
         Label(providerPresets.firstOrNull { it.protocol==draft.protocol && it.name==draft.name }?.purpose ?: "Custom provider: endpoint, model ও protocol provider docs অনুযায়ী দিন।")
