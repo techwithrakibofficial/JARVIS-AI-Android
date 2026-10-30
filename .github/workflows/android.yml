@@ -13,8 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      BUSHRA_DEBUG_STORE: ${{ runner.temp }}/bushra-debug.keystore
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -34,6 +32,8 @@ jobs:
           path: ${{ runner.temp }}/bushra-debug.keystore
           key: bushra-personal-development-signing-v2
       - name: Prepare development signing key
+        env:
+          BUSHRA_DEBUG_STORE: ${{ runner.temp }}/bushra-debug.keystore
         run: |
           if [ ! -f "$BUSHRA_DEBUG_STORE" ]; then
             keytool -genkeypair -keystore "$BUSHRA_DEBUG_STORE" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US'
@@ -41,6 +41,7 @@ jobs:
       - name: Compile, test and lint
         env:
           BUILD_NUMBER: ${{ github.run_number }}
+          BUSHRA_DEBUG_STORE: ${{ runner.temp }}/bushra-debug.keystore
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
