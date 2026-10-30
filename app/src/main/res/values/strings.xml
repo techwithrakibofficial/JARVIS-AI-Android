@@ -1,0 +1,3 @@
+<resources>
+    <string name="accessibility_description">BUSHRA reads visible screen text and performs taps, typing and scrolling only for a task you request. Screen sharing with your selected AI needs your approval. Review every external action. No root or Termux is needed.</string>
+</resources>
