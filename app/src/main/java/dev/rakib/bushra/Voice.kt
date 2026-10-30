@@ -75,8 +75,12 @@ class Voice(private val context:Context,private val store:LocalStore,private val
                     setOnErrorListener { mp,_,_->mp.release();if(player===mp)player=null;status("Voice playback হয়নি।");true }
                     prepare();start()
                 };status("বলছি…")
-            } catch (_:kotlinx.coroutines.CancellationException) {} catch(_:Exception) {
-                if(token==generation) { if(store.flag("ttsFallback",true)){status("Cloud voice হয়নি; ফোনের voice ব্যবহার করছি।");androidSpeech(text)}else status("Cloud voice হয়নি। API/voice access পরীক্ষা করুন।") }
+            } catch (_:kotlinx.coroutines.CancellationException) {} catch(error:Exception) {
+                if(token==generation) {
+                    if(force)status("Voice test ব্যর্থ: "+(error.message ?: "API/voice access পরীক্ষা করুন।"))
+                    else if(store.flag("ttsFallback",true)){androidSpeech(text);status("Cloud voice হয়নি; ফোনের voice ব্যবহার করছি।")}
+                    else status("Cloud voice হয়নি। API/voice access পরীক্ষা করুন।")
+                }
             }
         }
     }
