@@ -1,14 +1,7 @@
-# Preview verification
+# 0.2.0 verification scope
 
-Build environment: JDK 17, Android SDK 35 / build tools 35.0.0, Gradle 8.11.1, AGP 8.9.2, Kotlin 2.1.20.
+CI builds APK, runs JVM unit tests and static lint. Tests cover contact safety, chat/auth adapters, automatic model filtering, free-only OpenRouter selection and voice turn gating (duplicate callbacks, stale results, speech echo, pause/stop/interruption, bounded silence retries). A separate Android 16 emulator job checks the simplified setup UI and captures actual app screens before publishing.
 
-Checks for the first native preview:
+Check the specific release workflow and test artifacts for final results; do not reuse v0.1 test counts for v0.2. Emulator UI tests do not establish real TECNO microphone accuracy, live provider credits, ElevenLabs voice access, or third-party app automation success. Phone acceptance steps are in PHONE_SETUP.md.
 
-- `:app:assembleDebug`: installable APK produced (about 17 MB).
-- `:app:testDebugUnitTest`: 28 tests, zero failures/errors. Contact normalization, exact matching, ambiguous names, duplicate aliases, unsafe export paths, custom provider round-trip, and HTTPS mock-server protocol/auth tests for chat/model discovery/ElevenLabs are covered.
-- `:app:lintDebug`: completed with no blocking errors. Non-blocking SDK/dependency/style/icon warnings remain.
-- `apksigner verify --verbose`: APK signature scheme v2 verifies.
-- Manifest package `dev.rakib.bushra`, version `0.1.0`, minimum API 26, target API 35. CI versionCode uses workflow run number.
-- GitHub Actions independently repeats compile, tests and lint before a release is published. Check the release's target commit and linked workflow run for the final artifact.
-
-These are build/unit/static checks, not a real TECNO phone test. Real microphone recognition, TTS language data, provider credentials/quota, selected ElevenLabs voice access, accessibility behaviour and third-party app workflows require the user's acceptance tests in [PHONE_SETUP.md](PHONE_SETUP.md). The APK is a personal development preview, not a completed Play Store release.
+APK signing is development/debug signing with a specifically cached key. Cache eviction can still require reinstall; this is not permanent production signing.

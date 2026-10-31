@@ -104,7 +104,7 @@ private val Muted=Color(0xFFADBFD1)
     MaterialTheme(colorScheme=scheme) {
         Surface(Modifier.fillMaxSize(),color=scheme.background) {
           Box(Modifier.fillMaxSize()) {
-            Atmosphere(vm.store.flag("motion",true))
+            Atmosphere(vm.store.flag("motion",true) && vm.foreground)
             Scaffold(containerColor=Color.Transparent,
                 topBar={ Column(Modifier.statusBarsPadding().padding(horizontal=20.dp,vertical=10.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {

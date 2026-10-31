@@ -53,6 +53,7 @@ class Voice(private val context:Context,private val store:LocalStore,private val
             ttsReady=result==TextToSpeech.SUCCESS;ttsFailed=!ttsReady
             pending?.let { (token,text)->pending=null;if(token==gate.token){if(ttsReady)androidSpeech(text,token) else outputFailed("ফোনের TTS service প্রস্তুত হয়নি। TTS voice data install করুন।",token)} }
         } }
+        tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
         tts?.setOnUtteranceProgressListener(object:UtteranceProgressListener(){
             override fun onStart(id:String?) {main.post { if(id=="bushra-${gate.token}")setPhase(VoicePhase.SPEAKING,"বলছি…") }}
             override fun onDone(id:String?) {main.post { id?.removePrefix("bushra-")?.toIntOrNull()?.let(::finishOutput) }}

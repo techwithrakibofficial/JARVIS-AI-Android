@@ -62,4 +62,31 @@ class ApiProtocolTest {
         val p=Provider(endpoint=server.url("/v1/text-to-speech").toString(),model="tts-model",protocol=ApiProtocol.ELEVENLABS_TTS,authHeader="xi-api-key",authPrefix="",voice="voice-id")
         assertEquals("audio",String(api.speech(p,"voice-key","Hello")));val r=server.takeRequest();assertEquals("/v1/text-to-speech/voice-id",r.path);assertEquals("voice-key",r.getHeader("xi-api-key"));assertEquals("tts-model",JSONObject(r.body.readUtf8()).getString("model_id"))
     }
+    @Test fun automaticSetupFindsAndTestsFreeRouterWithoutManualModel()=runBlocking {
+        server.enqueue(MockResponse().setBody("{\"data\":[{\"id\":\"paid/model\"},{\"id\":\"openrouter/free\"}]}"))
+        server.enqueue(MockResponse().setBody("{\"choices\":[{\"message\":{\"content\":\"OK\"}}]}"))
+        val p=Provider(endpoint=server.url("/v1/chat/completions").toString(),model="")
+        val ready=api.connectAutomatically(p,"key","openrouter")
+        assertEquals("openrouter/free",ready.model)
+        assertEquals("/v1/models",server.takeRequest().path)
+        assertEquals("openrouter/free",JSONObject(server.takeRequest().body.readUtf8()).getString("model"))
+    }
+    @Test fun paidOnlyCatalogNeverMakesGenerationRequestForFreeSetup()=runBlocking {
+        server.enqueue(MockResponse().setBody("{\"data\":[{\"id\":\"paid/model\"}]}"))
+        val p=Provider(endpoint=server.url("/v1/chat/completions").toString())
+        assertTrue(runCatching{api.connectAutomatically(p,"key","openrouter")}.isFailure)
+        assertEquals(1,server.requestCount)
+    }
+    @Test fun geminiNativeDiscoveryUsesSupportedMethods()=runBlocking {
+        server.enqueue(MockResponse().setBody("{\"models\":[{\"name\":\"models/gemini-3.5-flash-lite\",\"supportedGenerationMethods\":[\"generateContent\"]},{\"name\":\"models/gemini-3.8-flash-tts\",\"supportedGenerationMethods\":[\"generateContent\"]}]}"))
+        val p=Provider(endpoint=server.url("/v1beta").toString(),protocol=ApiProtocol.GEMINI,authHeader="x-goog-api-key",authPrefix="")
+        assertEquals(listOf("gemini-3.5-flash-lite"),api.automaticModels(p,"key","gemini"))
+        assertEquals("/v1beta/models?pageSize=1000",server.takeRequest().path)
+    }
+    @Test fun claudeNativeDiscoverySelectsChatModel()=runBlocking {
+        server.enqueue(MockResponse().setBody("{\"data\":[{\"id\":\"claude-sonnet-test\"},{\"id\":\"claude-haiku-test\"}]}"))
+        val p=Provider(endpoint=server.url("/v1/messages").toString(),protocol=ApiProtocol.ANTHROPIC,authHeader="x-api-key",authPrefix="")
+        assertEquals("claude-haiku-test",api.automaticModels(p,"key","claude").first())
+        assertEquals("/v1/models?limit=100",server.takeRequest().path)
+    }
 }

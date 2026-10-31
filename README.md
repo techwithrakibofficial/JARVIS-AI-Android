@@ -1,4 +1,4 @@
-# BUSHRA AI
+# BUSHRA AI 0.2.0
 
 Native personal Android voice and action assistant by **Rakib Chowdhury Labs**.
 
@@ -11,14 +11,14 @@ Read [বাংলা phone setup](docs/PHONE_SETUP.md) and follow the acceptanc
 
 ## Included
 
-- Navy/blue/cyan glass-style dashboard with the supplied logo; light theme option.
-- Chat, tap-to-talk, phone TTS and optional cloud voice. Default ElevenLabs voice ID: `75CHIF904aWz6uq77J3P`; voice availability/language support requires a real account test.
-- API Studio: searchable provider presets, custom names/endpoints/model IDs, protocol and auth fields, compatible model discovery, small connection tests. OpenAI-compatible/Gemini/Anthropic chat, ElevenLabs/OpenAI-compatible TTS. Arbitrary unrelated protocols are not automatically supported.
-- Keys encrypted with Android Keystore; no bundled credentials, analytics SDK or cloud account backend. History/aliases/memory are local, but selected chat/voice data is sent to the chosen provider. Backups disabled.
-- Contacts: manual number or optional phone import, multiple Bangla/English aliases, spoken alias entry, duplicate/ambiguity guards. Original phone contact names remain unchanged.
-- Android actions: app/web launch, dialer and SMS draft; approval-gated screen text, exact-label click, typing, scroll and system navigation with optional Accessibility service. Each model action needs user approval. Every user task has a step limit and Stop.
-- Memory and honest action activity. A dispatched click is not reported as a verified outcome.
-- Build Studio exports small AI-generated source projects as ZIP after approval. It does not run generated code, compile another APK, auto-push to GitHub or deploy a website.
+- Animated cosmic glass dashboard with moving highlights, orbit rings, responsive wave animation, changing typography, dark/light themes and motion control. Low-power mode reduces motion.
+- Simple provider + key setup; endpoint/protocol/model fields removed from the UI. Automatic model discovery and connection test. OpenRouter free-first, OpenAI/ChatGPT, DeepSeek, Gemini, Claude, Groq, Grok and optional private OpenClaw gateway.
+- Foreground voice sessions with listening/thinking/speaking/paused/error states. Stop/interruption, bounded recognizer recovery, on-device language failure fallback (with network consent), TTS-ready queue, automatic next turn and 3/10/30-minute session limits. Mic ends on background/lock; a transient permission dialog no longer triggers onPause shutdown.
+- Preferred fixed ElevenLabs voice `75CHIF904aWz6uq77J3P` with an optional separate key. Device-language female TTS preference and system fallback. Device female/Bangla voice availability is not guaranteed.
+- Existing encrypted keys, aliases, contacts, history/memory and approval-gated phone actions preserved. Dialer/SMS remain drafts with final user confirmation.
+- Source ZIP export in Build Studio. Generated code is not run or automatically published.
+
+Voice uses a half-duplex STT > chat > TTS turn flow, not full Gemini Live audio/video parity. One chat API key covers the core flow via phone speech/TTS; a specific ElevenLabs cloud voice still needs its own credentials. Provider quota and installed speech services matter.
 
 ## Build
 

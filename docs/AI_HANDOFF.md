@@ -1,16 +1,11 @@
-# Current handoff
+# Current handoff — 0.2.0
 
-Project: BUSHRA AI, Rakib Chowdhury Labs. Repo: techwithrakibofficial/JARVIS-AI-Android.
+Repo: techwithrakibofficial/JARVIS-AI-Android. App: BUSHRA AI. Developer: Rakib Chowdhury Labs. Package dev.rakib.bushra. Native Kotlin/Compose, no Termux/Ubuntu/root/ADB.
 
-User wants a standalone APK, no Termux/Ubuntu/root/ADB, voice conversation and phone actions, glass dashboard with cyan/blue/navy, their supplied logo, generic API provider suggestions plus editable custom names/settings, and contact aliases. Default cloud voice ID: 75CHIF904aWz6uq77J3P. Never put API keys in source/logs.
+User found v0.1 UI plain and API/voice settings confusing; mic did not start. v0.2 removes manual model/protocol/endpoint fields, supports requested provider families with automatic model discovery/test, keeps OpenAI/ChatGPT one API, and explains the optional OpenClaw private gateway address requirement. Never imply one provider's key unlocks ElevenLabs or all unrelated APIs.
 
-Implemented first native preview:
-- Kotlin/Compose dashboard, chat, contacts, memory/activity, settings, source-export Build Studio.
-- OpenAI-compatible/Gemini/Anthropic chat adapters. ElevenLabs/OpenAI speech adapters, Android STT/TTS.
-- Provider presets and custom protocol/auth fields; optional model discovery for compatible endpoints; connection tests. Keys encrypted with Android Keystore, backups disabled.
-- Local manual/contact-import aliases, spoken alias dictation, duplicate-name guards, exact-match preference and ambiguity handling.
-- Approval-gated launch URL/app, dialer, SMS draft, screen reading/typing/exact-label click/scroll/Home/Back/Recents. Accessibility overlay approvals work while another app is in front. No direct SMS sending or completed-call claim.
-- Source ZIP generation with safe path checks, no generated code execution. Automatic project cloud builds/deployment remain future work.
-- GitHub workflow compiles, tests, lints, publishes an installable debug-signed preview. Cached development signing key is not a permanent signing solution.
+Voice rewritten around VoiceTurnGate: explicit phases, duplicate/stale transcript rejection, no recognizer while speaking, interruption, bounded silence/busy retries, local-language failure network fallback with consent, delayed TTS initialization queue, generation-safe completion, and foreground session/idle limits. MainActivity ends voice onStop instead of onPause so permission dialogs do not break startup. System speech service, actual API keys, installed female/Bangla voices and TECNO OEM behaviour still need phone acceptance testing.
 
-Before claiming a release ready, inspect actual CI result, APK signature and release asset URL. Real phone, live API/provider/voice access and third-party app flows need acceptance tests. Do not call compile/unit tests real-device validation. Do not overwrite user's other repositories or upload secrets. Offline Whisper/llama source checkouts in the original session are not integrated Android libraries.
+UI: PremiumUi.kt implements animated cosmic background, orbit, waveform, type transitions, glass action cards, voice room and simplified settings. Original user logo is kept. Data/keys/history/aliases remain app-local, secrets encrypted. Existing permission-gated phone controller retained. Build Studio source ZIP only.
+
+CI: unit tests + compile + lint, followed by Android 16 emulator UI smoke/screenshots and release publishing. Check actual run/artifacts before claiming success. Reuse the cached personal debug signing key (v2) for upgrades; permanent distribution still requires owner-managed release signing. Do not delete user data or put keys in source/logs. No unlimited free inference promise.

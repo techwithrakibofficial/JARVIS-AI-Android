@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.sin
@@ -149,8 +151,8 @@ private val Electric=Color(0xFF3984FF)
             TextButton(onClick={vm.tab=1},modifier=Modifier.align(Alignment.CenterHorizontally)){Text("লিখে বলো",fontSize=12.sp);Spacer(Modifier.width(6.dp));Icon(Icons.Outlined.ArrowOutward,null,modifier=Modifier.size(14.dp))}
         }
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("QUICK ACTIONS",fontSize=11.sp,letterSpacing=1.8.sp,fontWeight=FontWeight.Medium);Label("তোমার নিয়ন্ত্রণে")}
-        Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("কল করো","নাম বা ডাকনাম",Icons.Outlined.Phone,{if(!vm.busy)shortcut("call")},Modifier.weight(1f));PremiumTile("মেসেজ","খসড়া তৈরি করো",Icons.Outlined.Sms,{if(!vm.busy)shortcut("sms")},Modifier.weight(1f))}
-        Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("অ্যাপ খোলো","এক কথায় শুরু",Icons.Outlined.Apps,{if(!vm.busy)shortcut("open_app")},Modifier.weight(1f));PremiumTile("Build Studio","আইডিয়া থেকে source",Icons.Outlined.Code,{vm.tab=5},Modifier.weight(1f))}
+        Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("কল করো","নাম বা ডাকনাম",Icons.Outlined.Phone,{if(!vm.busy)shortcut("call") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f));PremiumTile("মেসেজ","খসড়া তৈরি করো",Icons.Outlined.Sms,{if(!vm.busy)shortcut("sms") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f))}
+        Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("অ্যাপ খোলো","এক কথায় শুরু",Icons.Outlined.Apps,{if(!vm.busy)shortcut("open_app") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f));PremiumTile("Build Studio","আইডিয়া থেকে source",Icons.Outlined.Code,{vm.tab=5},Modifier.weight(1f))}
         Glass(Modifier.fillMaxWidth()) {Row(verticalAlignment=Alignment.CenterVertically){Icon(Icons.Outlined.Shield,null,tint=MaterialTheme.colorScheme.primary);Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text("Private by design",fontSize=14.sp,fontWeight=FontWeight.Medium);Label("অনুমতি নিয়ে কাজ • এক ট্যাপে Stop")}}}
         vm.tasks.lastOrNull()?.let {t->Glass(Modifier.fillMaxWidth()){Label("LAST ACTIVITY");Spacer(Modifier.height(5.dp));Text(t.text,maxLines=2,overflow=TextOverflow.Ellipsis);Label(t.status)}}
         Text("RAKIB CHOWDHURY LABS  /  0.2.0",fontSize=10.sp,letterSpacing=1.5.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.align(Alignment.CenterHorizontally))
@@ -164,6 +166,12 @@ private val Electric=Color(0xFF3984FF)
     LaunchedEffect(active,vm.voice.startedAt){while(active){seconds=((System.currentTimeMillis()-vm.voice.startedAt)/1000).coerceAtLeast(0);delay(1000)}}
     DisposableEffect(active){val activity=ctx as? Activity;if(active)activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);onDispose{activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)}}
     Dialog(onDismissRequest=close,properties=DialogProperties(usePlatformDefaultWidth=false)){
+        val view=LocalView.current
+        DisposableEffect(active,view){
+            val window=(view.parent as? DialogWindowProvider)?.window
+            if(active)window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            onDispose{window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)}
+        }
         Surface(Modifier.fillMaxSize(),color=MaterialTheme.colorScheme.background){Box(Modifier.fillMaxSize()){
             Atmosphere(vm.store.flag("motion",true) && vm.foreground)
             Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(17.dp)){
