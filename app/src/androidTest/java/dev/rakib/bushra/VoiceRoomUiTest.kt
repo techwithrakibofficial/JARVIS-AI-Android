@@ -40,7 +40,8 @@ class VoiceRoomUiTest {
             assertEquals(VoicePhase.PAUSED,model!!.voice.phase)
             assertFalse(model!!.voice.listening)
             val dir=File(context.filesDir,"ui-captures").apply{mkdirs()}
-            ui.onAllNodes(isRoot()).filter(hasAnyDescendant(hasText("LIVE CONVERSATION"))).onFirst().captureToImage().asAndroidBitmap().let{bitmap->File(dir,"voice-room-paused.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}}
+            val bitmap=instrumentation.uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
+            File(dir,"voice-room-paused.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}
             scenario.moveToState(Lifecycle.State.CREATED)
             assertFalse(model!!.voice.sessionActive)
             assertFalse(model!!.voice.listening)

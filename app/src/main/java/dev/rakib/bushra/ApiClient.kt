@@ -79,8 +79,8 @@ class ApiClient(private val client:OkHttpClient=OkHttpClient.Builder().connectTi
         when(p.protocol) {
             ApiProtocol.GEMINI -> data.optJSONArray("candidates")?.optJSONObject(0)?.optJSONObject("content")?.optJSONArray("parts")?.let { a -> (0 until a.length()).joinToString("") { a.getJSONObject(it).optString("text") } }
             ApiProtocol.ANTHROPIC -> data.optJSONArray("content")?.let { a -> (0 until a.length()).joinToString("") { a.getJSONObject(it).optString("text") } }
-            else -> data.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("message")?.optString("content")
-        }?.takeIf { it.isNotBlank() } ?: error("Model থেকে text পাওয়া যায়নি। Model capability পরীক্ষা করুন।")
+            else -> data.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("message")?.opt("content")?.let { meaningfulReply(it) }
+        }?.takeIf { meaningfulReply(it).isNotBlank() } ?: error("Model থেকে text পাওয়া যায়নি। Model capability পরীক্ষা করুন।")
     }
     suspend fun models(p:Provider,key:String):List<String> = withContext(Dispatchers.IO) {
         require(p.protocol==ApiProtocol.OPENAI_CHAT) { "এই protocol-এ model ID নিজে লিখুন।" }

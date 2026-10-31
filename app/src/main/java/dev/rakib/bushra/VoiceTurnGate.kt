@@ -1,6 +1,6 @@
 package dev.rakib.bushra
 
-enum class VoicePhase { OFF, STARTING, LISTENING, THINKING, SPEAKING, PAUSED, ERROR }
+enum class VoicePhase { OFF, STARTING, LISTENING, WAITING, THINKING, SPEAKING, PAUSED, ERROR }
 
 /** Rejects stale recognition/playback callbacks and prevents the assistant hearing itself. */
 class VoiceTurnGate {

@@ -137,11 +137,12 @@ private val Muted=Color(0xFFADBFD1)
         if(speechConsent)AlertDialog(onDismissRequest={speechConsent=false;vm.dictationOnly=false},title={Text("ভয়েসের অনুমতি")},text={Text("ফোনের offline বাংলা service কাজ না করলে network speech ব্যবহার করা হবে। অডিও ফোনের speech provider-এ যেতে পারে। Mic শুধু এই session-এ চালু থাকবে; background/lock হলে বন্ধ হবে।")},confirmButton={Button(onClick={vm.flag("networkSpeech",true);vm.flag("speechConsentSeen",true);speechConsent=false;beginMic()}){Text("অনুমতি দিয়ে চালু করো")}},dismissButton={TextButton(onClick={vm.flag("networkSpeech",false);vm.flag("speechConsentSeen",true);speechConsent=false;beginMic()}){Text("শুধু offline")}})
         if(consent)AlertDialog(onDismissRequest={},title={Text("তোমার ব্যক্তিগত AI workspace")},text={Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
             Text("Chat ও voice text তোমার নির্বাচিত API provider-এ পাঠানো হবে। Cloud voice ব্যবহার করলে উত্তর ElevenLabs/নির্বাচিত voice provider-এও যাবে।")
-            Text("History ও contacts ফোনে সংরক্ষিত থাকে। Chat-এর সঙ্গে সাম্প্রতিক কথা, saved memory, alias labels ও installed app names নির্বাচিত AI-তে যায়। Screen text পাঠানোর আগে আলাদা অনুমতি নেওয়া হয়। Microphone শুধু তোমার চাপায় চালু হয়। কোনো tracking SDK নেই।")
+            Text("History ও contacts ফোনে সংরক্ষিত থাকে। Chat-এর সঙ্গে সাম্প্রতিক কথা, saved memory, alias labels ও installed app names নির্বাচিত AI-তে যায়। Screen text এবং নির্বাচিত message পড়া তোমার দেওয়া permission/scope অনুযায়ী চলে। Auto-chat চালু করলে নির্বাচিত contact-এর message AI-তে যায়। Microphone শুধু তোমার চাপায় চালু হয়। কোনো tracking SDK নেই।")
             Text("Call/SMS shortcuts dialer ও draft খোলে। পাঠানোর শেষ কাজ সংশ্লিষ্ট অ্যাপে করবে। Carrier charge ও provider quota প্রযোজ্য।")
         }},confirmButton={Button(onClick={vm.flag("consent",true);consent=false}){Text("বুঝেছি, শুরু করি")}})
         vm.approval?.let { request -> AlertDialog(onDismissRequest={vm.answerApproval(false)},title={Text(request.title)},text={Text(request.detail)},confirmButton={Button(onClick={vm.answerApproval(true)}){Text("অনুমতি দিন")}},dismissButton={TextButton(onClick={vm.answerApproval(false)}){Text("বাতিল")}}) }
         if(vm.notice.isNotBlank())AlertDialog(onDismissRequest={vm.notice=""},title={Text("BUSHRA")},text={Text(vm.notice)},confirmButton={TextButton(onClick={vm.notice=""}){Text("ঠিক আছে")}})
+        if(vm.autoChatOpen)AutoChatPanel(vm)
         if(shortcut.isNotEmpty())ShortcutDialog(shortcut,vm,{shortcut=""})
     }
 }
@@ -224,6 +225,7 @@ private val Muted=Color(0xFFADBFD1)
 }
 
 @Composable private fun TasksScreen(vm:AssistantModel) {
+    LaunchedEffect(Unit){vm.refreshDeviceState()}
     var note by remember {mutableStateOf(vm.store.text("memory"))}
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
         Text("Memory & activity",fontSize=23.sp,fontWeight=FontWeight.Medium)

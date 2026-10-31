@@ -1,4 +1,4 @@
-# BUSHRA AI 0.3.0 — ফোন setup
+# BUSHRA AI 0.4.0 — ফোন setup
 
 আগের APK uninstall করবেন না; নতুন APK তার ওপর install করুন। Settings → COMMAND ACCESS → সব permission নিয়ে automation চালু করো। Android Contacts, Mic, SMS, Call-এর জন্য আলাদা dialog দেখাতে পারে। Accessibility-ও Settings থেকে নিজে enable করুন। Root/Termux লাগে না।
 
@@ -18,3 +18,12 @@ Hands-free interruption default on: উত্তর বলার সময় আ�
 API quota/credit শেষের error phone action-এর permission error নয়। App launch-এর সাধারণ নির্দিষ্ট নির্দেশ এখন local router দিয়ে AI credit ছাড়াও চলে। Chat/অন্যান্য AI planning-এ valid provider key প্রয়োজন। কোনো key chat/screenshot-এ দেবেন না।
 
 Physical acceptance: নিজের test number-এ একটি SMS, নিজের WhatsApp chat-এ একটি message, saved Bengali/English name, duplicate-name ambiguity, SIM choice, revoke permission, interruption/echo, pause/background পরীক্ষা করুন। CI-এ কোনো বাস্তব contact-এ SMS/call/message পাঠানো হয় না।
+
+
+## 0.4 Auto-chat এবং স্থির voice
+
+Settings → SMS / WhatsApp auto-chat → saved contact/নম্বর → channel → কী বিষয়ে কথা বলবে → সময় ও reply limit → Start। চাইলে প্রথম message আলাদা field-এ দিন। SMS receive/read/send permissions, default SMS SIM ও Direct messaging লাগবে। WhatsApp-এর Notification access নিজে চালু করুন; ফোনে WhatsApp notification ও Reply action থাকতে হবে। AI reply [BUSHRA AI] নামে যাবে। নির্দিষ্ট contact-এর নতুন message ছাড়া কেউ auto-reply পাবে না। Groups বাদ; অন্য channel-এ fallback নেই। নির্বাচিত message ও ওই chat-এর সীমিত context AI provider-এ যায়। App খোলা না থাকলেও WorkManager কাজ করতে পারে; Android battery restriction-এ দেরি হতে পারে। Error/quota শেষ হলে rule থামে, auto-resend নেই। Panel থেকে contact Stop/সব Stop, অথবা মূল Stop ব্যবহার করুন। ইতিমধ্যে dispatch হওয়া message ফেরানো যায় না।
+
+“রাকিব ব্রো কী বলেছে, WhatsApp-এর message পড়ে বলো” বললে Notification access-এ থাকা message পড়া যাবে; পুরো WhatsApp history নয়। SMS read permission দিলে নির্দিষ্ট contact-এর সাম্প্রতিক SMS পড়া যায়।
+
+Default voice স্থির: playback চলার সময় দ্বিতীয় system recognizer চলে না; silence-এ একই recognizer restart করতে থাকে না। স্থানীয় voice detector অপেক্ষা করে; বারবার false wake হলে pause করে। Android speech provider নিজের per-turn start/end sound করতে পারে; ফোনের সব system sound mute করা হয় না। Optional hands-free interruption local AEC/headset-dependent: থামার পরে পুরো নির্দেশ বলুন। Physical TECNO test আবশ্যক।

@@ -30,9 +30,8 @@ class Voice(private val context:Context,private val store:LocalStore,private val
     private val main=Handler(Looper.getMainLooper())
     private val gate=VoiceTurnGate()
     private var recognizer:SpeechRecognizer?=null
-    private var bargeRecognizer:SpeechRecognizer?=null
-    private var bargeGeneration=0
-    private var bargeRetry:Job?=null
+    private val activityWatch=VoiceActivityWatch(context,scope)
+    private var quietWakes=0
     private var spokenReference=""
     var onHandsFreeInterrupt:(()->Unit)?=null
     var interruptionHint by mutableStateOf("");private set
@@ -71,12 +70,12 @@ class Voice(private val context:Context,private val store:LocalStore,private val
     private fun clearOutput(stopMonitor:Boolean=true){if(stopMonitor)stopBargeMonitor();pending=null;speechJob?.cancel();speechJob=null;api.cancel();runCatching{player?.stop()};player?.release();player=null;tts?.stop()}
     fun stop(){gate.stop();sessionActive=false;timer?.cancel();retry?.cancel();clearInput();clearOutput();caption="";setPhase(VoicePhase.OFF,"প্রস্তুত")}
     fun startSession(){
-        stop();sessionActive=true;startedAt=System.currentTimeMillis();lastActivity=startedAt;preferNetwork=false;busyRetries=0;gate.begin()
+        stop();sessionActive=true;quietWakes=0;startedAt=System.currentTimeMillis();lastActivity=startedAt;preferNetwork=false;busyRetries=0;gate.begin()
         timer=scope.launch {
             val duration=(store.text("voiceMinutes","10").toLongOrNull() ?: 10).coerceIn(3,30)*60_000
             while(sessionActive){delay(1000);val now=System.currentTimeMillis()
                 if(now-startedAt>=duration){stop();status("সময় শেষ, voice session বন্ধ হয়েছে।");break}
-                if(now-lastActivity>=90_000 && phase in listOf(VoicePhase.STARTING,VoicePhase.LISTENING,VoicePhase.PAUSED,VoicePhase.ERROR)){stop();status("নীরব থাকায় voice session বন্ধ হয়েছে।");break}
+                if(now-lastActivity>=90_000 && phase in listOf(VoicePhase.STARTING,VoicePhase.LISTENING,VoicePhase.WAITING,VoicePhase.PAUSED,VoicePhase.ERROR)){stop();status("নীরব থাকায় voice session বন্ধ হয়েছে।");break}
             }
         }
         startInput()
@@ -112,10 +111,9 @@ class Voice(private val context:Context,private val store:LocalStore,private val
                     if(useLocal && error in listOf(12,13,SpeechRecognizer.ERROR_CLIENT,SpeechRecognizer.ERROR_SERVER) && store.flag("networkSpeech")){
                         preferNetwork=true;scheduleInput(450);return
                     }
-                    if(error==SpeechRecognizer.ERROR_RECOGNIZER_BUSY && busyRetries++<1){scheduleInput(850);return}
                     if(error in listOf(SpeechRecognizer.ERROR_NO_MATCH,SpeechRecognizer.ERROR_SPEECH_TIMEOUT)){
-                        if(sessionActive && gate.missed(token)){setPhase(VoicePhase.STARTING,"আবার শুনছি…");scheduleInput(900)}
-                        else {gate.pause();setPhase(VoicePhase.PAUSED,"কথা ধরা যায়নি। Mic চাপলে আবার শুনব।")}
+                        if(sessionActive && quietWakes<2)waitForVoice()
+                        else {gate.pause();setPhase(VoicePhase.PAUSED,"কথা ধরা যায়নি। Mic চাপলে আবার শুনব; আর নিজে restart হবে না।")}
                         return
                     }
                     fail(when(error){
@@ -129,7 +127,7 @@ class Voice(private val context:Context,private val store:LocalStore,private val
                 override fun onResults(results:Bundle?){
                     val text=results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
                     if(!gate.accept(token,text))return
-                    clearInput();caption=text;lastActivity=System.currentTimeMillis();busyRetries=0
+                    clearInput();caption=text;lastActivity=System.currentTimeMillis();busyRetries=0;quietWakes=0
                     if(sessionActive)setPhase(VoicePhase.THINKING,"ভাবছি…") else {gate.stop();setPhase(VoicePhase.OFF,"কথা পাওয়া গেছে")}
                     transcript(text)
                 }
@@ -198,56 +196,22 @@ class Voice(private val context:Context,private val store:LocalStore,private val
     }
     private fun finishWithoutOutput(){if(sessionActive && gate.active)scheduleInput(400)else setPhase(VoicePhase.OFF,"প্রস্তুত")}
     private fun outputFailed(message:String,token:Int){if(token==gate.token){gate.error();setPhase(VoicePhase.ERROR,message)}}
-    private fun stopBargeMonitor(){
-        bargeGeneration++;bargeRetry?.cancel();bargeRetry=null
-        val old=bargeRecognizer;bargeRecognizer=null
-        runCatching{old?.cancel()};runCatching{old?.destroy()}
+    private fun stopBargeMonitor(){activityWatch.stop()}
+    /** Stable playback never starts a second SpeechRecognizer. Optional interruption uses local AEC/VAD. */
+    private fun startBargeMonitor(spoken:String,outputToken:Int){
+        if(!sessionActive || gate.token!=outputToken || !store.flag("handsFreeInterrupt",false))return
+        val started=activityWatch.start(true,onUnavailable={interruptionHint="Voice detector পাওয়া যায়নি; orbit দিয়ে থামাও।"}){
+            if(sessionActive && gate.token==outputToken){
+                clearOutput();gate.resume();onHandsFreeInterrupt?.invoke()
+                status("থেমেছি। এবার পুরো নির্দেশটি বলো।");startInput()
+            }
+        }
+        interruptionHint=if(started)"লোকাল voice detector চালু; থামার পরে পুরো নির্দেশ বলো। Headset-এ ভালো কাজ করে।" else "এই ফোনে echo cancellation/headset পাওয়া যায়নি। স্থির voice mode চলছে; orbit দিয়ে থামাও।"
     }
-    /** A separate ASR window watches playback. Echo must be rejected before stopping or submitting. */
-    private fun startBargeMonitor(spoken:String,outputToken:Int,attempt:Int=0){
-        if(!sessionActive || !gate.active || gate.token!=outputToken || !store.flag("handsFreeInterrupt",true))return
-        stopBargeMonitor()
-        val local=!preferNetwork && Build.VERSION.SDK_INT>=31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
-        if(!local && !store.flag("networkSpeech")){interruptionHint="Hands-free interruption-এর জন্য speech network অনুমতি বা on-device speech service লাগবে।";return}
-        val generation=bargeGeneration
-        var latched=false
-        fun active()=generation==bargeGeneration && sessionActive && gate.active && (latched || gate.token==outputToken)
-        fun latch(text:String){
-            if(!active() || latched || !isHumanInterruption(text,spoken))return
-            latched=true;clearOutput(false);gate.resume();lastActivity=System.currentTimeMillis()
-            onHandsFreeInterrupt?.invoke();caption=text;setPhase(VoicePhase.LISTENING,"থেমেছি, তোমার কথা শুনছি…")
-        }
-        fun recover(){
-            if(!active())return
-            if(latched){stopBargeMonitor();startInput();return}
-            stopBargeMonitor()
-            if(attempt<3){bargeRetry=scope.launch{delay(600);if(sessionActive && gate.token==outputToken)startBargeMonitor(spoken,outputToken,attempt+1)}}
-            else interruptionHint="ফোনের speech service interruption বন্ধ করেছে। Orbit চাপলে কথা থামবে; headset-এ আবার চেষ্টা করো।"
-        }
-        try{
-            bargeRecognizer=if(local && Build.VERSION.SDK_INT>=31)SpeechRecognizer.createOnDeviceSpeechRecognizer(context) else SpeechRecognizer.createSpeechRecognizer(context)
-            bargeRecognizer?.setRecognitionListener(object:RecognitionListener{
-                override fun onReadyForSpeech(params:Bundle?){if(active())interruptionHint="কথা বলে বাধা দিতে পারো • নিজের কণ্ঠের echo বাদ দেওয়া হচ্ছে"}
-                override fun onBeginningOfSpeech(){}
-                override fun onRmsChanged(rmsdB:Float){}
-                override fun onBufferReceived(buffer:ByteArray?){}
-                override fun onEndOfSpeech(){}
-                override fun onPartialResults(results:Bundle?){if(active()){val h=results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty();latch(h);if(latched)caption=h}}
-                override fun onResults(results:Bundle?){
-                    if(!active())return
-                    val h=results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
-                    latch(h)
-                    if(latched){stopBargeMonitor();if(h.isNotBlank()){gate.thinking();caption=h;setPhase(VoicePhase.THINKING,"ভাবছি…");transcript(h)}else startInput()}
-                    else recover()
-                }
-                override fun onError(error:Int){if(active()){if(local && error in listOf(12,13,SpeechRecognizer.ERROR_CLIENT,SpeechRecognizer.ERROR_SERVER) && store.flag("networkSpeech"))preferNetwork=true;recover()}}
-                override fun onEvent(eventType:Int,params:Bundle?){}
-            })
-            bargeRecognizer?.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE,store.text("language","bn-BD"))
-                .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS,true).putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1))
-        }catch(_:Exception){interruptionHint="এই speech service একসঙ্গে playback/listening চালায়নি। Orbit দিয়ে থামানো যাবে।";stopBargeMonitor()}
+    private fun waitForVoice(){
+        gate.pause();setPhase(VoicePhase.WAITING,"চুপচাপ অপেক্ষা করছি। আবার কথা বললে শুনব।")
+        val token=gate.token
+        if(!activityWatch.start(false,onUnavailable={if(sessionActive && gate.token==token)setPhase(VoicePhase.PAUSED,"Speech service প্রস্তুত নয়। Mic চাপলে চেষ্টা হবে।")}){if(sessionActive && gate.token==token){quietWakes++;startInput()}}){setPhase(VoicePhase.PAUSED,"Mic চাপলে আবার শুনব।")}
     }
     fun close(){stop();tts?.shutdown()}
 }

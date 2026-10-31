@@ -23,7 +23,8 @@ class SetupUiTest {
     private fun capture(name:String){
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         val dir=File(context.filesDir,"ui-captures").apply{mkdirs()}
-        ui.onAllNodes(isRoot()).filter(hasAnyDescendant(hasText(if(name=="provider-and-key-only")"দুই ধাপেই প্রস্তুত।" else if(name=="simple-settings")"Simple. Connected." else "তোমার নিজস্ব"))).onFirst().captureToImage().asAndroidBitmap().let {bitmap->File(dir,"$name.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}}
+        val bitmap=InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
+        File(dir,"$name.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}
     }
     @Test fun homeAndSimpleConnectionAreRenderedWithoutTechnicalFields(){
         ui.onAllNodesWithText("Home").onFirst().performClick()
@@ -40,4 +41,13 @@ class SetupUiTest {
         ui.onAllNodesWithText("পূর্ণ HTTPS endpoint").assertCountEquals(0)
         capture("provider-and-key-only")
     }
+    @Test fun autoChatSetupDoesNotSendBeforeOwnerStarts(){
+        ui.runOnIdle{androidx.lifecycle.ViewModelProvider(ui.activity)[AssistantModel::class.java].autoChatOpen=true}
+        ui.onNodeWithText("SMS / WhatsApp auto-chat").assertIsDisplayed()
+        ui.onNodeWithText("ফোনে saved নাম অথবা নম্বর").assertIsDisplayed()
+        ui.onNodeWithText("এই contact-এর auto-chat চালু করো").assertIsNotEnabled()
+        capture("auto-chat-setup")
+        ui.onNodeWithText("সব automatic reply এখনই বন্ধ করো").performScrollTo().performClick()
+    }
+
 }

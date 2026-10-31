@@ -167,7 +167,7 @@ private val Electric=Color(0xFF3984FF)
         Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("অ্যাপ খোলো","এক কথায় শুরু",Icons.Outlined.Apps,{if(!vm.busy)shortcut("open_app") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f));PremiumTile("Build Studio","আইডিয়া থেকে source",Icons.Outlined.Code,{vm.tab=5},Modifier.weight(1f))}
         Glass(Modifier.fillMaxWidth()) {Row(verticalAlignment=Alignment.CenterVertically){Icon(Icons.Outlined.Shield,null,tint=MaterialTheme.colorScheme.primary);Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text("COMMAND PROTOCOL",fontSize=14.sp,fontWeight=FontWeight.Medium);Label("নিজের নির্দেশে কাজ • এক ট্যাপে Stop")}}}
         vm.tasks.lastOrNull()?.let {t->Glass(Modifier.fillMaxWidth()){Label("LAST ACTIVITY");Spacer(Modifier.height(5.dp));Text(t.text,maxLines=2,overflow=TextOverflow.Ellipsis);Label(t.status)}}
-        Text("RAKIB CHOWDHURY LABS  /  0.3.0",fontSize=10.sp,letterSpacing=1.5.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.align(Alignment.CenterHorizontally))
+        Text("RAKIB CHOWDHURY LABS  /  0.4.0",fontSize=10.sp,letterSpacing=1.5.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.align(Alignment.CenterHorizontally))
     }
 }
 @Composable private fun LabelCentered(text:String){Text(text,fontSize=12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,textAlign=TextAlign.Center,modifier=Modifier.fillMaxWidth())}
@@ -192,7 +192,7 @@ private val Electric=Color(0xFF3984FF)
                 Spacer(Modifier.height(4.dp))
                 OrbitAvatar(phase,vm.voice.level,vm.store.flag("motion",true),{if(active)vm.interruptVoice() else start()},246)
                 WaveStrip(phase,vm.voice.level,vm.store.flag("motion",true))
-                Text(when(phase){VoicePhase.STARTING->"তোমার কথা শুনব…";VoicePhase.LISTENING->"বলো, শুনছি।";VoicePhase.THINKING->"একটু ভাবছি…";VoicePhase.SPEAKING->"তোমাকে বলছি…";VoicePhase.PAUSED->"একটু বিরতি।";VoicePhase.ERROR->"আবার চেষ্টা করি।";VoicePhase.OFF->"আবার কথা হবে?"},fontSize=25.sp,fontWeight=FontWeight.Medium,textAlign=TextAlign.Center)
+                Text(when(phase){VoicePhase.STARTING->"তোমার কথা শুনব…";VoicePhase.LISTENING->"বলো, শুনছি।";VoicePhase.THINKING->"একটু ভাবছি…";VoicePhase.SPEAKING->"তোমাকে বলছি…";VoicePhase.WAITING->"কথার অপেক্ষায়।";VoicePhase.PAUSED->"একটু বিরতি।";VoicePhase.ERROR->"আবার চেষ্টা করি।";VoicePhase.OFF->"আবার কথা হবে?"},fontSize=25.sp,fontWeight=FontWeight.Medium,textAlign=TextAlign.Center)
                 Text(vm.status,fontSize=13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,textAlign=TextAlign.Center,maxLines=4,overflow=TextOverflow.Ellipsis)
                 val caption=if(phase in listOf(VoicePhase.LISTENING,VoicePhase.THINKING))vm.voice.caption else vm.history.lastOrNull{it.who=="assistant"}?.text.orEmpty()
                 if(caption.isNotBlank())Glass(Modifier.fillMaxWidth()){Text(caption.take(650),fontSize=15.sp,maxLines=7,overflow=TextOverflow.Ellipsis)}
@@ -204,7 +204,7 @@ private val Electric=Color(0xFF3984FF)
                     FilledTonalIconButton(onClick={if(active)vm.interruptVoice() else start()},modifier=Modifier.size(58.dp)){Icon(Icons.Outlined.GraphicEq,"উত্তর থামিয়ে কথা বলো")}
                 }
                 if(!active)GradientAction("Voice mode শুরু করো",Icons.Outlined.Mic,start,Modifier.fillMaxWidth())
-                LabelCentered("কথা বলে বাধা দিতে পারো। Speech service না ধরলে orbit চাপো।")
+                LabelCentered("স্থির voice mode • নীরবতায় restart loop নেই • উত্তর থামাতে orbit চাপো; hands-free option Settings-এ।")
                 if(vm.voice.interruptionHint.isNotBlank())LabelCentered(vm.voice.interruptionHint)
                 LabelCentered("${vm.store.text("voiceMinutes","10")} মিনিটে auto end • নীরবতায় auto stop • অ্যাপ background/lock হলে mic বন্ধ")
             }
@@ -231,6 +231,7 @@ private val Electric=Color(0xFF3984FF)
             Text("একটি key-তে মূল কাজগুলো",fontWeight=FontWeight.Medium);Spacer(Modifier.height(6.dp));Label("নির্বাচিত AI দিয়ে chat ও actions, আর ফোনের speech/TTS দিয়ে voice চলে। ElevenLabs-এর নির্দিষ্ট কণ্ঠ চাইলে শুধু তার key আলাদা লাগবে। Provider-এর quota/খরচ প্রযোজ্য।")
         }
         AutomationSetup(vm)
+        GradientAction("SMS / WhatsApp auto-chat",Icons.Outlined.Chat,{vm.autoChatBrief="";vm.autoChatOpen=true},Modifier.fillMaxWidth())
         Glass(Modifier.fillMaxWidth()){
             Text("তোমার কণ্ঠসঙ্গী",fontSize=18.sp,fontWeight=FontWeight.Medium);Spacer(Modifier.height(8.dp))
             Row(verticalAlignment=Alignment.CenterVertically){RadioButton(vm.store.flag("preferredVoice",true),{vm.flag("preferredVoice",true)});Text("তোমার নির্বাচিত ElevenLabs voice",modifier=Modifier.weight(1f),fontSize=13.sp)}
@@ -248,8 +249,8 @@ private val Electric=Color(0xFF3984FF)
             Row{FilterChip(vm.store.text("language","bn-BD")=="bn-BD",{vm.setting("language","bn-BD")},label={Text("বাংলা")});Spacer(Modifier.width(10.dp));FilterChip(vm.store.text("language")=="en-US",{vm.setting("language","en-US")},label={Text("English")})}
             Spacer(Modifier.height(5.dp));Label("এক session-এর সর্বোচ্চ সময়")
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){listOf("3","10","30").forEach {min->FilterChip(vm.store.text("voiceMinutes","10")==min,{vm.setting("voiceMinutes",min)},label={Text("$min মিনিট")})}}
-            SettingSwitch("কথা বলে উত্তর থামাও",vm.store.flag("handsFreeInterrupt",true)){vm.flag("handsFreeInterrupt",it)}
-            Label("Speaker চলার সময় speech listener echo বাদ দিয়ে নতুন কথা ধরার চেষ্টা করবে। Headset-এ ভালো কাজ করে; ফোনের speech service-এ playback-এর সময় mic না চললে button দিয়ে থামানো যাবে।")
+            SettingSwitch("কথা বলে থামাও (পরীক্ষামূলক)",vm.store.flag("handsFreeInterrupt",false)){vm.flag("handsFreeInterrupt",it)}
+            Label("Default স্থির voice mode-এ playback চলার সময় দ্বিতীয় speech recognizer চলে না। এই option-এ স্থানীয় echo-cancelled voice detector ব্যবহার হবে; থামার পরে পুরো নির্দেশ বলো। Headset ভালো।")
         }
         Glass(Modifier.fillMaxWidth()){
             Text("CYBER GLASS / HUD",fontSize=18.sp,fontWeight=FontWeight.Medium)
@@ -270,7 +271,7 @@ private val Electric=Color(0xFF3984FF)
             TextButton(onClick={vm.stop()}){Text("সব কাজ ও voice থামাও")}
             TextButton(onClick={ctx.startActivity(Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://github.com/techwithrakibofficial/JARVIS-AI-Android/releases")))}){Text("APK updates")}
         }
-        Label("BUSHRA AI 0.3.0 • Rakib Chowdhury Labs")
+        Label("BUSHRA AI 0.4.0 • Rakib Chowdhury Labs")
     }
     if(connect)ConnectionSheet(vm,editing){connect=false;editing=null}
 }

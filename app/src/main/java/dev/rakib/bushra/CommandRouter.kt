@@ -20,21 +20,33 @@ fun appPackages(name:String):List<String> {
         else -> emptyList()
     }
 }
+/** Only remove command scaffolding at the beginning, never words inside a message. */
+fun cleanCommandTarget(value:String):String {
+    var t=value.trim()
+    val prefix=Regex("^(?:(?:আচ্ছা|তুমি|প্লিজ|সোনা|দয়া করে|দয়া করে|ওপেন করো|ওপেন কর|ওপেন করে|ওপেন|খুলে|খোলো|এবং|অ্যান্ড|and|করো|কর|তে|এ)\\s+)+",RegexOption.IGNORE_CASE)
+    repeat(3){t=t.replace(prefix,"").trim()}
+    return t
+}
 /** Local routing has priority over generative text. WhatsApp is never downgraded to carrier SMS. */
 fun routeCommand(input:String):DeviceCommand? {
     val text=input.trim().trimEnd('।','.','!','?')
     val wa=whatsappMention(text)
-    if(wa || Regex("এসএমএস|এস এম এস|\\bsms\\b",RegexOption.IGNORE_CASE).containsMatchIn(text)) {
+    val sms=Regex("এসএমএস|এস এম এস|\\bsms\\b",RegexOption.IGNORE_CASE).containsMatchIn(text)
+    // An auto-chat instruction must go to the rule editor, never become a message body.
+    if(Regex("অটো.?রিপ্লাই|auto.?reply|auto.?chat|তার.*রিপ্লাই|সে.*রিপ্লাই",RegexOption.IGNORE_CASE).containsMatchIn(text))return null
+    if(wa || sms) {
         val withoutChannel=if(wa)text.replace(Regex("whats\\s*app|হোয়াটসঅ্যাপ|হোয়াটসঅ্যাপ|ওয়াটসঅ্যাপ|ওয়াটসঅ্যাপ",RegexOption.IGNORE_CASE),"") else text
-        val clean=withoutChannel.replace(Regex("^(আচ্ছা\\s+|তুমি\\s+|প্লিজ\\s+|দয়া করে\\s+|দয়া করে\\s+)+"),"").replace(Regex("^\\s*(ওপেন করে|খুলে|তে|এ)\\s*"),"").trim()
+        val clean=cleanCommandTarget(withoutChannel)
         val match=Regex("^(.+?)(?:\\s+(?:কে|কাছে|নাম্বারে|নম্বরে|আইডিতে)|কে)\\s+(.+?)\\s+(?:লিখে\\s+)?(?:(?:এসএমএস|এস এম এস|sms|মেসেজ|ম্যাসেজ|message)\\s+)?(?:(?:সেন্ড|send|পাঠিয়ে|পাঠিয়ে)\\s+)?(?:করো|কর|দাও|দিন|পাঠাও)$",RegexOption.IGNORE_CASE).find(clean)
         if(match!=null) {
-            val target=match.groupValues[1].trim();val body=match.groupValues[2].trim().removeSuffix(" লিখে").trim(' ','"','“','”','\'')
+            val target=cleanCommandTarget(match.groupValues[1]);val body=match.groupValues[2].trim().removeSuffix(" লিখে").trim(' ','"','“','”','\'')
             if(target.isNotBlank() && body.isNotBlank())return DeviceCommand(if(wa)"whatsapp" else "sms",JSONObject().put("contact",target).put("text",body))
         }
+        val english=Regex("^(?:open\\s+and\\s+)?(?:send\\s+)?(?:sms|message)?\\s*(.+?)\\s+to\\s+(.+)$",RegexOption.IGNORE_CASE).find(clean)
+        if(english!=null)return DeviceCommand(if(wa)"whatsapp" else "sms",JSONObject().put("contact",cleanCommandTarget(english.groupValues[2])).put("text",english.groupValues[1].trim()))
     }
     val call=Regex("^(?:(?:আচ্ছা|তুমি|প্লিজ)\\s+)*(.+?)(?:\\s+কে|কে)?\\s+(?:কল|ফোন)\\s+(?:করো|কর|দাও)$",RegexOption.IGNORE_CASE).find(text)
-    if(call!=null)return DeviceCommand("call",JSONObject().put("contact",call.groupValues[1].trim()))
+    if(call!=null)return DeviceCommand("call",JSONObject().put("contact",cleanCommandTarget(call.groupValues[1])))
     val callEnglish=Regex("^(?:please )?call (.+)$",RegexOption.IGNORE_CASE).find(text)
     if(callEnglish!=null)return DeviceCommand("call",JSONObject().put("contact",callEnglish.groupValues[1].trim()))
     val open=Regex("^(?:(?:আচ্ছা|তুমি|প্লিজ|দয়া করে|দয়া করে)\\s+)*(.*?)\\s+(?:ওপেন\\s*(?:করো|কর|করে দাও)|খোলো|খুলে দাও|চালু করো)$",RegexOption.IGNORE_CASE).find(text)
@@ -43,6 +55,7 @@ fun routeCommand(input:String):DeviceCommand? {
     if(en!=null)return DeviceCommand("open_app",JSONObject().put("name",en.groupValues[1].trim()))
     return null
 }
+fun meaningfulReply(value:Any?):String = (value as? String)?.trim()?.takeIf{it.isNotBlank() && it.lowercase() !in setOf("null","undefined")} ?: ""
 fun validateChannel(userRequest:String,tool:String){
     require(!(whatsappMention(userRequest) && tool=="sms")){"WhatsApp-এর নির্দেশে SMS পাঠানো বন্ধ করা হয়েছে। WhatsApp contact ও মেসেজটি বলো।"}
 }

@@ -1,4 +1,4 @@
-# BUSHRA AI 0.3.0
+# BUSHRA AI 0.4.0
 
 Native personal Android voice and action assistant by **Rakib Chowdhury Labs**.
 
@@ -41,3 +41,9 @@ Speech/API/model quotas and prices belong to their providers. No automatic paid 
 See [current handoff](docs/AI_HANDOFF.md). Keep credentials out of issues, screenshots and source.
 
 The user-supplied branding image is included at the user's request. It is not granted as a reusable stock asset. Third-party AndroidX/Kotlin/OkHttp libraries retain their own licenses.
+
+## Selected-contact auto-chat
+
+Settings → SMS / WhatsApp auto-chat. Pick one saved contact/number, the channel, purpose, expiry and reply limit, then explicitly Start. SMS needs receive/read/send permission; WhatsApp needs Notification access and a notification Reply action. Replies are marked [BUSHRA AI]. Only selected new incoming messages and that short thread are sent to the selected model. Groups are excluded. Stops on quota/send errors, has deduplication and reserves a send before dispatch; no automatic resend. Android WorkManager scheduling/battery restrictions can delay replies. Stop rules in the panel or use the main Stop button. Closing the Activity alone does not stop a deliberately activated rule.
+
+Stable voice no longer runs parallel system SpeechRecognizers or restart-on-silence loops. Quiet local audio-energy waiting is bounded; experimental playback interruption uses hardware echo cancellation/headsets, not a second recognizer. Android's speech service may still make its own start/end cue per real turn. Full low-latency Gemini Live parity is not claimed.

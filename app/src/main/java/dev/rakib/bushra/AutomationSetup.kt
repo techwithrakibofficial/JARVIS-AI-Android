@@ -18,7 +18,7 @@ import androidx.core.content.ContextCompat
 
 @Composable internal fun AutomationSetup(vm:AssistantModel){
     val ctx=LocalContext.current;val revision=vm.revision
-    val requested=arrayOf(Manifest.permission.RECORD_AUDIO,Manifest.permission.READ_CONTACTS,Manifest.permission.SEND_SMS,Manifest.permission.CALL_PHONE)
+    val requested=arrayOf(Manifest.permission.RECORD_AUDIO,Manifest.permission.READ_CONTACTS,Manifest.permission.SEND_SMS,Manifest.permission.RECEIVE_SMS,Manifest.permission.READ_SMS,Manifest.permission.CALL_PHONE)
     val launcher=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){result->
         vm.refreshDeviceState()
         vm.notice=if(result.values.all{it})"ফোনের permissions দেওয়া হয়েছে। Screen control-এর জন্য Accessibility চালু করো।" else "কিছু permission দেওয়া হয়নি। নিচের status দেখো; দেওয়া permissions-এ কাজ চলবে।"
@@ -32,7 +32,7 @@ import androidx.core.content.ContextCompat
             if(missing.isNotEmpty())launcher.launch(missing.toTypedArray())else vm.notice="সব runtime permission আছে। Accessibility status দেখো।"
         },modifier=Modifier.fillMaxWidth()){Text("সব permission নিয়ে automation চালু করো")}
         Label("এটি চালু করলে তোমার নির্দেশে কল, SMS ও screen actions-এর জন্য প্রতি ধাপে app confirmation চাইবে না। SMS-এ SIM charge হতে পারে। Android আলাদা permission dialog দেখাতে পারে; Accessibility নিজে enable করতে হবে।")
-        requested.forEach {p->val label=when(p){Manifest.permission.RECORD_AUDIO->"Microphone";Manifest.permission.READ_CONTACTS->"ফোনের Contacts";Manifest.permission.SEND_SMS->"SMS পাঠানো";else->"কল করা"};Label("${if(ContextCompat.checkSelfPermission(ctx,p)==PackageManager.PERMISSION_GRANTED)"✓" else "○"} $label")}
+        requested.forEach {p->val label=when(p){Manifest.permission.RECORD_AUDIO->"Microphone";Manifest.permission.READ_CONTACTS->"ফোনের Contacts";Manifest.permission.SEND_SMS->"SMS পাঠানো";Manifest.permission.RECEIVE_SMS->"নতুন SMS গ্রহণ";Manifest.permission.READ_SMS->"নির্দিষ্ট contact-এর SMS পড়া";else->"কল করা"};Label("${if(ContextCompat.checkSelfPermission(ctx,p)==PackageManager.PERMISSION_GRANTED)"✓" else "○"} $label")}
         SettingSwitch("আমার নির্দেশে screen actions",vm.store.flag("trustedActions")){vm.flag("trustedActions",it)}
         SettingSwitch("Direct SMS / call / WhatsApp Send",vm.store.flag("directMessaging")){vm.flag("directMessaging",it)}
         Label("App খোলা ও Back/Home-এ app confirmation লাগে না। একই নামের একাধিক contact থাকলে নম্বর নির্দিষ্ট করতে হবে।")
