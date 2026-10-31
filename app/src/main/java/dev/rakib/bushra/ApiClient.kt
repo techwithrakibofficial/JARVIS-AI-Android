@@ -13,6 +13,8 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+class ProviderFailure(val statusCode:Int,message:String):IOException(message)
+
 class ApiClient(private val client:OkHttpClient=OkHttpClient.Builder().connectTimeout(20,TimeUnit.SECONDS).readTimeout(90,TimeUnit.SECONDS)
         .followRedirects(false).followSslRedirects(false).build()) {
     @Volatile private var running:Call?=null
@@ -31,7 +33,7 @@ class ApiClient(private val client:OkHttpClient=OkHttpClient.Builder().connectTi
         val call=client.newCall(request);running=call
         try {
             return call.execute().use { response ->
-                if(!response.isSuccessful) throw IOException(when(response.code) {
+                if(!response.isSuccessful) throw ProviderFailure(response.code,when(response.code) {
                     401,403 -> "API অনুমতি নেই (${response.code})। Key, endpoint ও model access পরীক্ষা করুন।"
                     402 -> "Provider credit/quota শেষ। Free model বা অন্য provider বেছে নিন।"
                     429 -> "Provider rate limit। একটু পরে চেষ্টা করুন বা নিজে অন্য provider বেছে নিন।"
@@ -48,7 +50,7 @@ class ApiClient(private val client:OkHttpClient=OkHttpClient.Builder().connectTi
         } finally { if(running===call)running=null }
     }
     suspend fun chat(p:Provider,key:String,system:String,turns:List<ChatLine>,limit:Int=1600):String=withContext(Dispatchers.IO) {
-        require(p.isChat) { "Chat provider নির্বাচন করুন।" };require(p.model.isNotBlank()) { "Settings-এ model ID দিন।" }
+        require(p.isChat) { "Chat provider নির্বাচন করুন।" };require(p.model.isNotBlank()) { "Settings থেকে আবার Connect করুন।" }
         val recent=turns.takeLast(20)
         val body:JSONObject;val url:String
         when(p.protocol) {
@@ -69,7 +71,8 @@ class ApiClient(private val client:OkHttpClient=OkHttpClient.Builder().connectTi
                 url=p.endpoint
                 val messages=JSONArray().put(JSONObject().put("role","system").put("content",system))
                 recent.forEach { messages.put(JSONObject().put("role",if(it.who=="assistant")"assistant" else "user").put("content",it.text)) }
-                body=JSONObject().put("model",p.model).put("messages",messages).put("max_tokens",limit).put("stream",false)
+                val budgetKey=if(p.endpoint.contains("api.openai.com") && (p.model.startsWith("gpt-5")||p.model.startsWith("gpt-6")||p.model.startsWith("o1")||p.model.startsWith("o3")))"max_completion_tokens" else "max_tokens"
+                body=JSONObject().put("model",p.model).put("messages",messages).put(budgetKey,limit).put("stream",false)
             }
         }
         val data=JSONObject(String(execute(request(p,key,url,body)),Charsets.UTF_8))
@@ -85,6 +88,37 @@ class ApiClient(private val client:OkHttpClient=OkHttpClient.Builder().connectTi
         val j=JSONObject(String(execute(request(p,key,p.endpoint.removeSuffix("/chat/completions")+"/models")),Charsets.UTF_8))
         val a=j.optJSONArray("data") ?: error("এই API model list দেয়নি। Model ID নিজে লিখুন।")
         (0 until a.length()).mapNotNull { a.optJSONObject(it)?.optString("id") }.filter { it.isNotBlank() }.sorted()
+    }
+    suspend fun automaticModels(p:Provider,key:String,service:String):List<String> = withContext(Dispatchers.IO) {
+        if(service=="openclaw")return@withContext listOf("openclaw/default")
+        val ids=when(p.protocol) {
+            ApiProtocol.GEMINI -> {
+                val j=JSONObject(String(execute(request(p,key,p.endpoint.trimEnd('/')+"/models?pageSize=1000")),Charsets.UTF_8))
+                val a=j.optJSONArray("models") ?: error("Gemini model list পাওয়া যায়নি।")
+                (0 until a.length()).mapNotNull { i -> val m=a.getJSONObject(i)
+                    if(m.optJSONArray("supportedGenerationMethods")?.strings()?.contains("generateContent")==true)m.optString("name").removePrefix("models/") else null }
+            }
+            ApiProtocol.ANTHROPIC -> {
+                val url=p.endpoint.removeSuffix("/messages")+"/models?limit=100"
+                val a=JSONObject(String(execute(request(p,key,url)),Charsets.UTF_8)).optJSONArray("data") ?: error("Claude model list পাওয়া যায়নি।")
+                (0 until a.length()).map { a.getJSONObject(it).getString("id") }
+            }
+            else -> models(p,key)
+        }
+        chatCandidates(ids,service).also { require(it.isNotEmpty()) { if(service=="openrouter")"এখন free chat model পাওয়া যায়নি। পরে আবার Connect করুন বা অন্য provider বেছে নিন।" else "এই key-এ ব্যবহারযোগ্য chat model পাওয়া যায়নি। Provider access পরীক্ষা করুন।" } }
+    }
+    suspend fun connectAutomatically(p:Provider,key:String,service:String):Provider {
+        require(key.isNotBlank()) { "API key দিন।" }
+        val ids=automaticModels(p,key,service)
+        var last:Exception?=null
+        for(id in ids.take(3)) {
+            val candidate=p.copy(model=id)
+            try {
+                chat(candidate,key,"Return only the word OK.",listOf(ChatLine("user","Connection test. Say OK.")),320)
+                return candidate
+            } catch(e:ProviderFailure) { if(e.statusCode !in listOf(400,404))throw e;last=e }
+        }
+        throw (last ?: IOException("সংযোগ পরীক্ষা হয়নি।"))
     }
     suspend fun speech(p:Provider,key:String,text:String):ByteArray=withContext(Dispatchers.IO) {
         require(!p.isChat) { "Voice provider নির্বাচন করুন।" }
