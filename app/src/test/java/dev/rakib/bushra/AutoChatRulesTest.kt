@@ -21,4 +21,8 @@ class AutoChatRulesTest {
  @Test fun secondScreenshotGrammarWorks(){val c=routeCommand("whatsapp ওপেন করো এবং রাকিব ব্রো কে হাই লিখে এসএমএস সেন্ড করো")!!;assertEquals("রাকিব ব্রো",c.args.getString("contact"))}
  @Test fun politeWordsDoNotBecomeContact(){assertEquals("রাকিব ব্রো",cleanCommandTarget("আচ্ছা সোনা তুমি রাকিব ব্রো"))}
  @Test fun modelNullIsNotShown(){assertEquals("",meaningfulReply(org.json.JSONObject.NULL));assertEquals("",meaningfulReply("null"));assertEquals("ঠিক আছে",meaningfulReply("ঠিক আছে"))}
+ @Test fun numberEntryUsesSavedWhatsAppLabel(){val c=ContactAlias(name="Rakib Bro",phone="01712345678",aliases=emptyList());assertEquals(c,contactByPhone("+8801712345678",listOf(c)))}
+ @Test fun duplicateCountryFormatsAreOneContact(){val c=ContactAlias(name="Rakib Bro",phone="01712345678",aliases=emptyList());assertEquals(1,resolveContacts("Rakib Bro",listOf(c,c.copy(phone="+8801712345678"))).size)}
+ @Test fun spokenSpacingDoesNotLoseTheContact(){val c=ContactAlias(name="Rakib Bro",phone="01712345678",aliases=emptyList());assertEquals(c,resolveContacts("রাকিবব্রো",listOf(c)).single())}
+
 }

@@ -18,7 +18,7 @@ Read [বাংলা phone setup](docs/PHONE_SETUP.md) and follow the acceptanc
 - Existing encrypted keys, aliases, contacts and history/memory preserved. Native Bengali/English routing opens common apps without AI credit. Saved phone contacts resolve locally; re-import is optional. One-time opt-in trusted actions and direct SMS/call plus guarded WhatsApp Send; carrier SMS never substitutes for WhatsApp. Tasks records SMS sent callbacks, not delivery.
 - Source ZIP export in Build Studio. Generated code is not run or automatically published.
 
-Voice uses an STT > chat > TTS turn flow with experimental playback-time ASR and echo filtering for hands-free interruption, not full Gemini Live audio/video parity. One chat API key covers the core flow via phone speech/TTS; a specific ElevenLabs cloud voice still needs its own credentials. Provider quota and installed speech services matter.
+Voice uses an STT > chat > TTS turn flow with quiet local voice-activity waiting and optional hardware-dependent interruption, not full Gemini Live audio/video parity. One chat API key covers the core flow via phone speech/TTS; a specific ElevenLabs cloud voice still needs its own credentials. Provider quota and installed speech services matter.
 
 ## Build
 

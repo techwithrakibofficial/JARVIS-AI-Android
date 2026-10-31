@@ -79,3 +79,5 @@ fun whatsappPhone(value:String):String {
     val n=normalizedPhone(value)
     return when {n.startsWith("+" )->n.drop(1);n.startsWith("00880")->n.drop(2);n.matches(Regex("01[3-9][0-9]{8}"))->"88$n";n.startsWith("00")->n.drop(2);else->n}
 }
+
+fun contactByPhone(phone:String,contacts:List<ContactAlias>)=contacts.firstOrNull{whatsappPhone(it.phone)==whatsappPhone(phone)}

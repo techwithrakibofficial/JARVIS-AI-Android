@@ -29,7 +29,10 @@ class PhoneActions(private val context:Context,private val store:LocalStore) {
     fun granted(permission:String)=ContextCompat.checkSelfPermission(context,permission)==PackageManager.PERMISSION_GRANTED
     fun recipient(query:String):ContactAlias {
         val requested=cleanCommandTarget(query)
-        if(validPhone(requested))return ContactAlias(name=requested,phone=normalizedPhone(requested),aliases=emptyList())
+        if(validPhone(requested)){
+            val known=(if(granted(Manifest.permission.READ_CONTACTS))deviceContacts() else emptyList())+store.contacts()
+            return contactByPhone(requested,known) ?: ContactAlias(name=requested,phone=normalizedPhone(requested),aliases=emptyList())
+        }
         val saved=store.contacts()
         // Match all numbers before selecting; never silently prefer an alias over a different phone contact.
         val contacts=saved+if(granted(Manifest.permission.READ_CONTACTS))deviceContacts() else emptyList()

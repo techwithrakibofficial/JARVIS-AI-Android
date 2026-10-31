@@ -55,7 +55,10 @@ import org.json.JSONObject
     require(vm.store.flag("directMessaging")){"COMMAND ACCESS-এ Direct messaging চালু করো।"}
     if(channel=="sms")require(ContextCompat.checkSelfPermission(ctx,Manifest.permission.RECEIVE_SMS)==PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(ctx,Manifest.permission.SEND_SMS)==PackageManager.PERMISSION_GRANTED){"SMS receive/send permission দাও।"}
     else require(BushraNotifications.instance!=null){"BUSHRA-এর Notification access চালু করো।"}
-    val person=withContext(Dispatchers.IO){vm.phone.recipient(contact)}
+    val person=withContext(Dispatchers.IO){
+        val selected=vm.phone.recipient(contact)
+        if(ContextCompat.checkSelfPermission(ctx,Manifest.permission.READ_CONTACTS)==PackageManager.PERMISSION_GRANTED)contactByPhone(selected.phone,vm.phone.deviceContacts()) ?: selected else selected
+    }
     val now=System.currentTimeMillis();val rule=AutoRule(channel=channel,label=person.name,phone=person.phone,instruction=purpose.take(1000),created=now,expires=now+minutes*60_000L,limit=limit)
     auto.saveRule(rule);auto.log(person.name,"$channel auto-chat চালু: $minutes মিনিট / $limit reply")
     if(first.isNotBlank()){
