@@ -60,7 +60,11 @@ fun resolveContacts(query: String, contacts: List<ContactAlias>): List<ContactAl
     val phone=normalizedPhone(query)
     val exact=contacts.filter { c -> (validPhone(query) && normalizedPhone(c.phone)==phone) || (c.aliases+c.name).any { normalizedName(it)==q } }
     if (exact.isNotEmpty()) return exact.distinctBy { normalizedPhone(it.phone) }
-    return contacts.filter { c -> (c.aliases+c.name).any { normalizedName(it).contains(q) } }.distinctBy { normalizedPhone(it.phone) }
+    val partial=contacts.filter { c -> (c.aliases+c.name).any { normalizedName(it).contains(q) } }.distinctBy { normalizedPhone(it.phone) }
+    if(partial.isNotEmpty())return partial
+    val sound=contactSoundKey(query)
+    if(sound.replace(" ","").length<3)return emptyList()
+    return contacts.filter { c -> (c.aliases+c.name).any { contactSoundKey(it)==sound } }.distinctBy { normalizedPhone(it.phone) }
 }
 fun aliasConflict(candidate:ContactAlias, contacts:List<ContactAlias>):Boolean {
     val names=(candidate.aliases+candidate.name).map(::normalizedName).filter { it.isNotBlank() }.toSet()

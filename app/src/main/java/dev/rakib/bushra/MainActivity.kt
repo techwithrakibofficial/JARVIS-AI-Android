@@ -56,19 +56,19 @@ import java.util.Locale
 class MainActivity:ComponentActivity() {
     private val model:AssistantModel by viewModels()
     override fun onCreate(savedInstanceState:Bundle?) { super.onCreate(savedInstanceState);setContent { BushraApp(model) } }
-    override fun onStart() { super.onStart();model.foreground=true }
+    override fun onStart() { super.onStart();model.foreground=true;model.refreshDeviceState() }
     override fun onStop() { model.onBackground();super.onStop() }
 }
 
 private val Cyan=Color(0xFF43E7EF)
 private val Blue=Color(0xFF4389FF)
-private val Navy=Color(0xFF07111E)
-private val Panel=Color(0xFF122238)
+private val Navy=Color(0xFF060811)
+private val Panel=Color(0xFF111326)
 private val Muted=Color(0xFFADBFD1)
 @Composable internal fun Glass(modifier:Modifier=Modifier,content:@Composable ColumnScope.()->Unit) {
     val palette=MaterialTheme.colorScheme
-    Column(modifier.clip(RoundedCornerShape(26.dp)).background(Brush.linearGradient(listOf(palette.surface.copy(alpha=.80f),palette.surfaceVariant.copy(alpha=.42f))))
-        .border(1.dp,Brush.linearGradient(listOf(palette.primary.copy(alpha=.30f),palette.outlineVariant.copy(alpha=.15f),palette.secondary.copy(alpha=.18f))),RoundedCornerShape(26.dp)).padding(18.dp),content=content)
+    Column(modifier.clip(RoundedCornerShape(26.dp)).background(Brush.verticalGradient(listOf(palette.surfaceVariant.copy(alpha=.52f),palette.surface.copy(alpha=.92f),palette.surface.copy(alpha=.75f))))
+        .border(1.dp,Brush.linearGradient(listOf(Color.White.copy(alpha=.25f),palette.primary.copy(alpha=.35f),Color(0xFFB16EFF).copy(alpha=.30f))),RoundedCornerShape(26.dp)).padding(18.dp),content=content)
 }
 @Composable internal fun Label(text:String){Text(text,color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=12.sp)}
 @Composable internal fun Field(value:String,change:(String)->Unit,label:String,modifier:Modifier=Modifier,secret:Boolean=false,single:Boolean=true) {
@@ -191,8 +191,8 @@ private val Muted=Color(0xFFADBFD1)
     fun load() { scope.launch { runCatching { withContext(Dispatchers.IO){vm.phone.deviceContacts()} }.onSuccess { contacts=it;picker=true }.onFailure { vm.notice=it.message.orEmpty() } } }
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){if(it)load() else vm.notice="Contacts permission দেওয়া হয়নি। Manual নম্বর যোগ করতে পারো।"}
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
-        Text("তোমার নিজের ডাকনাম",fontSize=23.sp,fontWeight=FontWeight.Medium)
-        Label("আসল contact name অপরিবর্তিত থাকবে। যেমন: অফিসের বস, মা, Rahim bhai। একই ব্যক্তির একাধিক বাংলা/English alias রাখা যায়।")
+        Text("ফোনের contacts ও ডাকনাম",fontSize=23.sp,fontWeight=FontWeight.Medium)
+        Label("Saved contact name সরাসরি কাজ করবে; এখানে আবার save করতে হবে না। শুধু আলাদা ডাকনাম চাইলে যোগ করো। যেমন: অফিসের বস, মা, Rahim bhai। একই ব্যক্তির একাধিক বাংলা/English alias রাখা যায়।")
         Button(onClick={editing=ContactAlias(name="",phone="",aliases=emptyList())},modifier=Modifier.fillMaxWidth()){Icon(Icons.Outlined.Add,null);Text(" নম্বর ও ডাকনাম যোগ করো")}
         OutlinedButton(onClick={if(ContextCompat.checkSelfPermission(ctx,Manifest.permission.READ_CONTACTS)==PackageManager.PERMISSION_GRANTED)load() else permission.launch(Manifest.permission.READ_CONTACTS)},modifier=Modifier.fillMaxWidth()){Text("ফোনের Contacts থেকে নির্বাচন")}
         Field(query,{query=it},"নাম / ডাকনাম খোঁজো")
@@ -201,7 +201,7 @@ private val Muted=Color(0xFFADBFD1)
                 Row {TextButton(onClick={vm.localAction("call",JSONObject().put("contact",c.phone))},enabled=!vm.busy){Text("Dialer")};TextButton(onClick={vm.deleteAlias(c)}){Text("Remove alias")}}
             }
         }
-        if(vm.aliases.isEmpty())Glass(Modifier.fillMaxWidth()){Text("প্রথম contact alias যোগ করো।");Label("AI না বুঝলেও Home shortcut-এ ডাকনাম লিখে ব্যবহার করা যাবে।")}
+        if(vm.aliases.isEmpty())Glass(Modifier.fillMaxWidth()){Text("ফোনে save থাকা নাম বললেই হবে।");Label("Settings-এ Contacts permission দাও। এখানে alias রাখা ঐচ্ছিক।")}
     }
     if(picker)FullSheet("ফোনের Contact বেছে নাও",{picker=false}) {
         var filter by remember { mutableStateOf("") };Field(filter,{filter=it},"নাম বা নম্বর")

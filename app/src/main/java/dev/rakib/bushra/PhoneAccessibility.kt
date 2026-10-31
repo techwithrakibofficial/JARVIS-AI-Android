@@ -73,6 +73,17 @@ class PhoneAccessibility:AccessibilityService() {
         require(field.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,bundle)) { "লেখা বসানো যায়নি।" }
         return "Text inserted; not sent."
     }
+    /** Restricted to the deep-linked WhatsApp composer and exact message; no generic Send guessing. */
+    fun sendWhatsAppIfReady(pkg:String,text:String,name:String,phone:String):String? {
+        if(pkg !in listOf("com.whatsapp","com.whatsapp.w4b") || currentPackage()!=pkg)return null
+        val all=nodes().filter {it.isVisibleToUser && it.packageName?.toString()==pkg}
+        val headings=all.filter {it.viewIdResourceName in listOf("$pkg:id/conversation_contact_name","$pkg:id/contact_name")}
+        if(headings.none { n -> val t=n.text?.toString().orEmpty();normalizedName(t)==normalizedName(name) || (validPhone(t) && whatsappPhone(t)==whatsappPhone(phone)) })return null
+        val composer=all.singleOrNull {it.isEditable && !it.isPassword && it.viewIdResourceName=="$pkg:id/entry"} ?: return null
+        if(composer.text?.toString()!=text)return null
+        val send=all.singleOrNull {it.isEnabled && it.isClickable && it.viewIdResourceName=="$pkg:id/send"} ?: return null
+        return if(send.performAction(AccessibilityNodeInfo.ACTION_CLICK))"WhatsApp-এর exact message composer যাচাই করে Send চাপা হয়েছে; delivery নিশ্চিত নয়।" else "WhatsApp Send click হয়নি; SMS পাঠানো হয়নি।"
+    }
     fun scroll(direction:String):String {
         val node=nodes().firstOrNull { it.isScrollable && it.isVisibleToUser } ?: error("Scrollable অংশ পাওয়া যায়নি।")
         require(node.performAction(if(direction=="up")AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)) { "Scroll হয়নি।" }

@@ -33,14 +33,14 @@ class VoiceRoomUiTest {
         var model:AssistantModel?=null
         try {
             scenario.onActivity{model=ViewModelProvider(it)[AssistantModel::class.java]}
-            ui.onNodeWithText("ভয়েসে কথা বলো").performClick()
+            ui.onNodeWithText("ভয়েসে কথা বলো").performScrollTo().performClick()
             ui.onNodeWithText("LIVE CONVERSATION").assertIsDisplayed()
             ui.onNodeWithContentDescription("Mic pause বা resume").performClick()
             ui.onNodeWithText("একটু বিরতি।").assertIsDisplayed()
             assertEquals(VoicePhase.PAUSED,model!!.voice.phase)
             assertFalse(model!!.voice.listening)
             val dir=File(context.filesDir,"ui-captures").apply{mkdirs()}
-            ui.onAllNodes(isRoot()).onLast().captureToImage().asAndroidBitmap().let{bitmap->File(dir,"voice-room-paused.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}}
+            ui.onAllNodes(isRoot()).filter(hasAnyDescendant(hasText("LIVE CONVERSATION"))).onFirst().captureToImage().asAndroidBitmap().let{bitmap->File(dir,"voice-room-paused.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}}
             scenario.moveToState(Lifecycle.State.CREATED)
             assertFalse(model!!.voice.sessionActive)
             assertFalse(model!!.voice.listening)

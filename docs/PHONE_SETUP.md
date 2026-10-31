@@ -1,46 +1,20 @@
-# BUSHRA AI 0.2.0 — সহজ setup
+# BUSHRA AI 0.3.0 — ফোন setup
 
-## আগের APK থেকে update
+আগের APK uninstall করবেন না; নতুন APK তার ওপর install করুন। Settings → COMMAND ACCESS → সব permission নিয়ে automation চালু করো। Android Contacts, Mic, SMS, Call-এর জন্য আলাদা dialog দেখাতে পারে। Accessibility-ও Settings থেকে নিজে enable করুন। Root/Termux লাগে না।
 
-নতুন APK আগের app-এর ওপর install করুন। Uninstall করবেন না; contacts, history ও encrypted keys ফোনে থাকবে। প্রথমবার Settings থেকে saved provider-এ Reconnect দিন, যাতে automatic model setup পরীক্ষা হয়। Development signing key CI cache-এ থাকে; cache হারালে Android update reject করতে পারে।
+App launch, Home/Back-এর জন্য app confirmation লাগে না। Trusted screen actions ও Direct SMS/call/WhatsApp চালু করলে নিজের নির্দেশে বারবার app confirmation ছাড়াই কাজ হবে; toggle বন্ধ করা যায়। ফোনে save থাকা contact name-ই বলুন; app-এ আবার import/save বাধ্যতামূলক নয়। বাংলা থেকে English sound match-এ একাধিক নম্বর মিললে নিজে নম্বর দিয়ে নির্দিষ্ট করুন। পুরো address book AI-তে upload হয় না।
 
-## দুই ধাপে AI
+উদাহরণ:
+- “হোয়াটসঅ্যাপ ওপেন করো”
+- “হোয়াটসঅ্যাপ খুলে রাকিব ব্রো কে হাই লিখে এসএমএস সেন্ড করো” — WhatsApp-এই যাবে, carrier SMS নয়।
+- “রাকিব ব্রো কে হাই এসএমএস পাঠাও” — default SMS SIM থেকে direct mode-এ পাঠাবে। SIM settings-এ default SMS SIM বেছে রাখুন। Carrier charge প্রযোজ্য। Tasks-এ sent callback দেখুন; Sent মানে Delivered নয়। ব্যর্থ হলে স্বয়ংক্রিয় retry নেই।
 
-1. Settings > AI connect করো। OpenRouter, OpenAI/ChatGPT, DeepSeek, Gemini, Claude, Groq বা Grok বেছে নিজের API key দিন।
-2. Connect & save চাপুন। Model ID, endpoint বা protocol পূরণ করতে হবে না। অ্যাপ provider-এর model list পড়ে উপযুক্ত chat model নেয় এবং ছোট request দিয়ে পরীক্ষা করে। OpenRouter-এ free router/free model ছাড়া paid fallback নেই। অন্য provider-এর নিজস্ব billing/quota প্রযোজ্য।
+WhatsApp install/enable থাকতে হবে। Deep link saved number দিয়ে chat খোলে। Automatic Send শুধু Accessibility-তে exact contact title, message এবং WhatsApp-এর পরিচিত composer/Send control একসঙ্গে মিললে চলে। WhatsApp version অনুযায়ী control বদলালে Send চাপবে না; fallback SMS-ও পাঠাবে না। তখন WhatsApp-এর Send নিজে দিন। WhatsApp Business fallback supported।
 
-OpenAI/ChatGPT এখানে OpenAI API connection; ChatGPT login/password নয়। OpenClaw হলো নিজের gateway agent: তার private HTTPS address ও token প্রয়োজন। Gateway-এ OpenAI-compatible Chat Completions চালু থাকতে হবে। এটি শুধু একটি hosted key service নয়।
+Settings → ElevenLabs key ও Voice ID অথবা voice link → Voice key রাখো → কণ্ঠ শুনে দেখো। ID/link voice নির্বাচন করে; key-এর বিকল্প নয়। নিজের account-এ voice available/library-তে থাকা ও প্রয়োজনীয় quota লাগবে। ব্যর্থ হলে সাধারণ conversation ফোনের TTS নেয়; female voice থাকলে অগ্রাধিকার। Test voice সত্যিকারের cloud error দেখায়।
 
-একটি chat key-তে chat, phone actions এবং ফোনের speech/TTS দিয়ে voice conversation চলে। OpenRouter key দিয়ে ElevenLabs voice পাওয়া যায় না।
+Hands-free interruption default on: উত্তর বলার সময় আলাদা speech listener নতুন কথা ও নিজের playback-এর পার্থক্য ধরার চেষ্টা করে; partial result-এ থামে, final transcript-এ নতুন নির্দেশ নেয়। “থামো” বলা যায়। এটি experimental; speaker echo, ভাষার pack ও Android speech service-এর ওপর নির্ভরশীল। Headset-এ বেশি উপযোগী। Service simultaneous playback/listening না দিলে orbit/pause button ব্যবহার করুন। Full Gemini Live বা guaranteed hardware echo cancellation নয়। Network speech enable করলে playback চলার সময় microphone audio-ও speech provider-এ যেতে পারে। Background/lock-এ voice session বন্ধ হয়।
 
-## Voice mode
+API quota/credit শেষের error phone action-এর permission error নয়। App launch-এর সাধারণ নির্দিষ্ট নির্দেশ এখন local router দিয়ে AI credit ছাড়াও চলে। Chat/অন্যান্য AI planning-এ valid provider key প্রয়োজন। কোনো key chat/screenshot-এ দেবেন না।
 
-- Home-এর বড় voice orbit বা “ভয়েসে কথা বলো” চাপুন। Microphone permission দিন।
-- প্রথমবার offline বাংলা service ব্যর্থ হলে network speech ব্যবহারের অনুমতি দিন। এতে অডিও ফোনের recognizer provider-এ যেতে পারে। শুধু offline বেছে নিলে ভাষার data না থাকলে স্পষ্ট error ও retry option পাবেন।
-- App শুনবে, final transcript নেবে, AI-তে পাঠাবে, উত্তর বলবে, তারপর আবার শুনবে। উত্তর বলার সময় recognizer বন্ধ থাকবে; নিজের উত্তরকে নতুন নির্দেশ হিসেবে নেবে না।
-- Orbit/ডান দিকের waveform চাপলে উত্তর থামিয়ে নতুন কথা নেবে। Mic pause-তে বর্তমান turn থামে; resume-এ আবার শুনবে। লাল button session শেষ করে।
-- Default session ১০ মিনিট; Settings-এ ৩/১০/৩০ মিনিট বাছাই করা যায়। নীরবতায় ৯০ সেকেন্ডে session শেষ হয়। No-match/timeout-এর retry সীমিত; বারবার mic restart করার loop নেই।
-- অ্যাপ background/phone lock হলে mic session বন্ধ হয়। ফেরত এসে নিজে চালু করুন। Permission dialog-এর সাময়িক onPause-এ mic অকারণে বন্ধ হয় না।
-- এটি foreground, turn-based half-duplex conversation; Gemini Live-এর পূর্ণ real-time audio/video capability বা background wake word নয়।
-
-## কণ্ঠ
-
-আপনার নির্বাচিত ElevenLabs voice ID fixed: `75CHIF904aWz6uq77J3P`। Settings-এ ঐচ্ছিক ElevenLabs key সংরক্ষণ করুন। Voice/model/account access ও ভাষা বাস্তব key দিয়ে পরীক্ষা করতে হবে। সাধারণ chat-এ cloud voice ব্যর্থ হলে ফোনের উপযুক্ত female voice-কে অগ্রাধিকার দিয়ে TTS fallback হয়। Test voice আলাদাভাবে error জানায়।
-
-ফোনে female/Bangla voice data না থাকলে app নতুন proprietary voice তৈরি করতে পারে না। “ফোনের voice data সেটআপ” দিয়ে Android TTS voice install/enable করুন। নারীকণ্ঠ না থাকলে system voice ব্যবহৃত হতে পারে।
-
-## Phone actions ও contacts
-
-Contacts-এ manual নম্বর বা phone contact import করে নিজের বাংলা/English ডাকনাম দিন। আসল contact name বদলায় না। একই alias একাধিক নম্বরে দেওয়া আটকানো হয়। Call shortcut dialer এবং SMS shortcut draft খোলে; শেষ Call/Send user করবেন। Carrier charge প্রযোজ্য।
-
-Screen control-এর জন্য Settings > Screen control চালু করো > BUSHRA Accessibility service enable করুন। Sideload restriction থাকলে Android App info menu-তে Allow restricted settings লাগতে পারে। Root/ADB/Developer Options লাগে না। Screen text AI-তে পাঠানো বা click/type/scroll করার আগে approval পড়ুন। যেকোনো সময়ে Stop/Cancel।
-
-## Privacy
-
-Keys Android Keystore দিয়ে encrypted, app backup বন্ধ, tracking SDK নেই। Recent conversation, saved memory, alias labels ও app names chat provider-এ যায়। Screen text যায় আলাদা approval-এর পরে। Password field বাদ দেওয়া হলেও অন্য private text থাকতে পারে। Keys chat/issue/screenshots-এ প্রকাশ করবেন না।
-
-## পরীক্ষা
-
-API connect, বাংলা typed chat, mic transcript, selected/cloud/fallback TTS, interruption, pause/resume, background stop এবং nickname দিয়ে নিজের নম্বরে dialer/SMS draft পরীক্ষা করুন। Screen actions প্রথমে অগুরুত্বপূর্ণ screen-এ পরীক্ষা করুন। Build Studio source ZIP তৈরি করে; অন্য APK compile বা website auto publish এখনো করে না।
-
-APK compile, unit tests, static lint এবং Android emulator UI smoke test-কে real TECNO microphone বা live account test বলা হয় না। সমস্যা হলে error text/কোন ধাপে সমস্যা তা জানান; API key পাঠাবেন না।
+Physical acceptance: নিজের test number-এ একটি SMS, নিজের WhatsApp chat-এ একটি message, saved Bengali/English name, duplicate-name ambiguity, SIM choice, revoke permission, interruption/echo, pause/background পরীক্ষা করুন। CI-এ কোনো বাস্তব contact-এ SMS/call/message পাঠানো হয় না।

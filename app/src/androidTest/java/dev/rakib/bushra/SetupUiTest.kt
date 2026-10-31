@@ -23,7 +23,7 @@ class SetupUiTest {
     private fun capture(name:String){
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         val dir=File(context.filesDir,"ui-captures").apply{mkdirs()}
-        ui.onAllNodes(isRoot()).onLast().captureToImage().asAndroidBitmap().let {bitmap->File(dir,"$name.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}}
+        ui.onAllNodes(isRoot()).filter(hasAnyDescendant(hasText(if(name=="provider-and-key-only")"দুই ধাপেই প্রস্তুত।" else if(name=="simple-settings")"Simple. Connected." else "তোমার নিজস্ব"))).onFirst().captureToImage().asAndroidBitmap().let {bitmap->File(dir,"$name.png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)}}
     }
     @Test fun homeAndSimpleConnectionAreRenderedWithoutTechnicalFields(){
         ui.onAllNodesWithText("Home").onFirst().performClick()

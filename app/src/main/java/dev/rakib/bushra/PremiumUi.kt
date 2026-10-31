@@ -58,7 +58,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 private val Ice=Color(0xFF4EE8F5)
-private val Iris=Color(0xFFAA8BFF)
+private val Iris=Color(0xFFB16EFF)
 private val Electric=Color(0xFF3984FF)
 @Composable private fun motionEnabled(requested:Boolean=true):Boolean {
     val ctx=LocalContext.current
@@ -77,6 +77,9 @@ private val Electric=Color(0xFF3984FF)
             val a=(.18f+.15f*sin((drift*2*PI+i).toFloat())).coerceIn(.03f,.4f)
             drawCircle(if(light)Electric.copy(alpha=a) else Ice.copy(alpha=a),if(i%4==0)1.6.dp.toPx() else .8.dp.toPx(),Offset(p.x*size.width,p.y*size.height))
         }
+        for(row in 0..20){val y=size.height*row/20;drawLine(Ice.copy(alpha=.035f),Offset(0f,y),Offset(size.width,y),.5.dp.toPx())}
+        val scanY=size.height*drift
+        drawLine(Ice.copy(alpha=.09f),Offset(0f,scanY),Offset(size.width,scanY),1.dp.toPx())
         for(i in 0..4){val x=size.width*(i*.23f);drawLine(Electric.copy(alpha=.055f),Offset(x,0f),Offset(x+size.width*.3f,size.height),.7.dp.toPx())}
     }
 }
@@ -105,6 +108,7 @@ private val Electric=Color(0xFF3984FF)
                 drawArc(tone,10f,54f,false,Offset(center.x-r,center.y-r),Size(r*2,r*2),style=Stroke(2.dp.toPx(),cap=StrokeCap.Round))
                 drawArc(Iris,190f,32f,false,Offset(center.x-r*1.1f,center.y-r*1.1f),Size(r*2.2f,r*2.2f),style=Stroke(1.5.dp.toPx(),cap=StrokeCap.Round))
             }
+            for(tick in 0..47){rotate(tick*7.5f){drawLine(tone.copy(alpha=if(tick%4==0).7f else .3f),Offset(center.x,center.y-r*1.06f),Offset(center.x,center.y-r*(if(tick%4==0)1.13f else 1.09f)),1.dp.toPx())}}
             if(phase==VoicePhase.LISTENING)drawCircle(tone.copy(alpha=.2f),r*(.75f+.14f*level),center,style=Stroke((2+level*5).dp.toPx()))
         }
         Image(painterResource(R.drawable.brand_logo),"ভয়েস শুরু বা মাঝখানে বাধা দাও",Modifier.size((sizeDp*.65).dp).clip(CircleShape).border(2.dp,tone.copy(alpha=.65f),CircleShape),contentScale=ContentScale.Crop)
@@ -123,9 +127,17 @@ private val Electric=Color(0xFF3984FF)
         }
     }
 }
-@Composable private fun GradientAction(text:String,icon:ImageVector,onClick:()->Unit,modifier:Modifier=Modifier) {
-    Box(modifier.height(52.dp).shadow(12.dp,RoundedCornerShape(18.dp),ambientColor=Electric.copy(alpha=.2f),spotColor=Electric.copy(alpha=.25f)).clip(RoundedCornerShape(18.dp)).background(Brush.linearGradient(listOf(Electric,Color(0xFF7465EA)))).clickable(onClick=onClick),contentAlignment=Alignment.Center){
-        Row(verticalAlignment=Alignment.CenterVertically){Icon(icon,null,tint=Color.White,modifier=Modifier.size(21.dp));Spacer(Modifier.width(8.dp));Text(text,color=Color.White,fontWeight=FontWeight.SemiBold,fontSize=15.sp)}
+@Composable internal fun GradientAction(text:String,icon:ImageVector,onClick:()->Unit,modifier:Modifier=Modifier) {
+    val shape=RoundedCornerShape(50)
+    Box(modifier.heightIn(min=58.dp).shadow(15.dp,shape,ambientColor=Ice.copy(alpha=.25f),spotColor=Iris.copy(alpha=.4f)).clip(shape)
+        .background(Brush.verticalGradient(listOf(Color(0xFF667387),Color(0xFF182334),Color(0xFF080F1B),Color(0xFF163D50))))
+        .border(1.5.dp,Brush.linearGradient(listOf(Color.White.copy(alpha=.75f),Ice.copy(alpha=.4f),Iris.copy(alpha=.8f),Color.White.copy(alpha=.4f))),shape)
+        .clickable(onClick=onClick).padding(horizontal=20.dp,vertical=16.dp),contentAlignment=Alignment.Center){
+        Canvas(Modifier.matchParentSize()){
+            drawLine(Color.White.copy(alpha=.35f),Offset(size.width*.12f,1.dp.toPx()),Offset(size.width*.85f,1.dp.toPx()),1.4.dp.toPx(),StrokeCap.Round)
+            drawLine(Ice.copy(alpha=.75f),Offset(size.width*.20f,size.height-1.dp.toPx()),Offset(size.width*.70f,size.height-1.dp.toPx()),2.dp.toPx(),StrokeCap.Round)
+        }
+        Row(verticalAlignment=Alignment.CenterVertically){Icon(icon,null,tint=Ice,modifier=Modifier.size(22.dp));Spacer(Modifier.width(10.dp));Text(text,color=Color.White,fontWeight=FontWeight.SemiBold,fontSize=14.sp)}
     }
 }
 @Composable private fun PremiumTile(title:String,detail:String,icon:ImageVector,onClick:()->Unit,modifier:Modifier=Modifier) {
@@ -140,10 +152,10 @@ private val Electric=Color(0xFF3984FF)
     val words=listOf("তোমার কথায়, তোমার পাশে।","ভাবনা থেকে কাজ, একসঙ্গে।","আড্ডা হোক, কাজও হোক।")
     LaunchedEffect(motion){while(motion){delay(4200);line=(line+1)%words.size}}
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal=20.dp).padding(top=12.dp,bottom=22.dp),verticalArrangement=Arrangement.spacedBy(17.dp)){
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){Text("PERSONAL INTELLIGENCE",fontSize=10.sp,letterSpacing=2.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);StatusChip(if(vm.chatProvider()!=null)"Connected" else "Let's connect",vm.chatProvider()!=null)}
-        Column {Text("তোমার নিজস্ব",fontSize=29.sp,fontWeight=FontWeight.Light);Text("AI universe.",style=TextStyle(brush=Brush.linearGradient(listOf(Ice,Electric,Iris)),fontSize=35.sp,fontWeight=FontWeight.Bold,letterSpacing=(-1).sp))}
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){Text("PERSONAL AGENT / ONLINE",fontSize=10.sp,letterSpacing=2.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);StatusChip(if(vm.chatProvider()!=null)"Connected" else "Let's connect",vm.chatProvider()!=null)}
+        Column {Text("তোমার নিজস্ব",fontSize=24.sp,fontWeight=FontWeight.Light);Text("COMMAND\nCENTER.",style=TextStyle(brush=Brush.linearGradient(listOf(Ice,Electric,Iris)),fontSize=34.sp,fontWeight=FontWeight.Bold,letterSpacing=(-1).sp))}
         Glass(Modifier.fillMaxWidth()) {
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("VOICE SPACE",fontSize=10.sp,letterSpacing=2.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);Icon(Icons.Outlined.GraphicEq,null,tint=MaterialTheme.colorScheme.primary,modifier=Modifier.size(19.dp))}
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("NEURAL VOICE LINK",fontSize=10.sp,letterSpacing=2.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);Icon(Icons.Outlined.GraphicEq,null,tint=MaterialTheme.colorScheme.primary,modifier=Modifier.size(19.dp))}
             Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center){OrbitAvatar(vm.voice.phase,vm.voice.level,motion,mic,216)}
             AnimatedContent(line,transitionSpec={(fadeIn(tween(500))+slideInVertically{it/3}) togetherWith fadeOut(tween(220))},label="rotating headline",modifier=Modifier.align(Alignment.CenterHorizontally)){i->Text(words[i],fontSize=18.sp,fontWeight=FontWeight.Medium,textAlign=TextAlign.Center)}
             Spacer(Modifier.height(6.dp));LabelCentered("কথা বলো • পরিকল্পনা করো • কাজ এগিয়ে নাও")
@@ -151,11 +163,11 @@ private val Electric=Color(0xFF3984FF)
             TextButton(onClick={vm.tab=1},modifier=Modifier.align(Alignment.CenterHorizontally)){Text("লিখে বলো",fontSize=12.sp);Spacer(Modifier.width(6.dp));Icon(Icons.Outlined.ArrowOutward,null,modifier=Modifier.size(14.dp))}
         }
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("QUICK ACTIONS",fontSize=11.sp,letterSpacing=1.8.sp,fontWeight=FontWeight.Medium);Label("তোমার নিয়ন্ত্রণে")}
-        Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("কল করো","নাম বা ডাকনাম",Icons.Outlined.Phone,{if(!vm.busy)shortcut("call") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f));PremiumTile("মেসেজ","খসড়া তৈরি করো",Icons.Outlined.Sms,{if(!vm.busy)shortcut("sms") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f))}
+        Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("কল করো","ফোনের saved নাম",Icons.Outlined.Phone,{if(!vm.busy)shortcut("call") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f));PremiumTile("মেসেজ","Default SIM / direct SMS",Icons.Outlined.Sms,{if(!vm.busy)shortcut("sms") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f))}
         Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){PremiumTile("অ্যাপ খোলো","এক কথায় শুরু",Icons.Outlined.Apps,{if(!vm.busy)shortcut("open_app") else vm.notice="আগের কাজ শেষ করো বা Stop চাপো।"},Modifier.weight(1f));PremiumTile("Build Studio","আইডিয়া থেকে source",Icons.Outlined.Code,{vm.tab=5},Modifier.weight(1f))}
-        Glass(Modifier.fillMaxWidth()) {Row(verticalAlignment=Alignment.CenterVertically){Icon(Icons.Outlined.Shield,null,tint=MaterialTheme.colorScheme.primary);Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text("Private by design",fontSize=14.sp,fontWeight=FontWeight.Medium);Label("অনুমতি নিয়ে কাজ • এক ট্যাপে Stop")}}}
+        Glass(Modifier.fillMaxWidth()) {Row(verticalAlignment=Alignment.CenterVertically){Icon(Icons.Outlined.Shield,null,tint=MaterialTheme.colorScheme.primary);Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text("COMMAND PROTOCOL",fontSize=14.sp,fontWeight=FontWeight.Medium);Label("নিজের নির্দেশে কাজ • এক ট্যাপে Stop")}}}
         vm.tasks.lastOrNull()?.let {t->Glass(Modifier.fillMaxWidth()){Label("LAST ACTIVITY");Spacer(Modifier.height(5.dp));Text(t.text,maxLines=2,overflow=TextOverflow.Ellipsis);Label(t.status)}}
-        Text("RAKIB CHOWDHURY LABS  /  0.2.0",fontSize=10.sp,letterSpacing=1.5.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.align(Alignment.CenterHorizontally))
+        Text("RAKIB CHOWDHURY LABS  /  0.3.0",fontSize=10.sp,letterSpacing=1.5.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.align(Alignment.CenterHorizontally))
     }
 }
 @Composable private fun LabelCentered(text:String){Text(text,fontSize=12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,textAlign=TextAlign.Center,modifier=Modifier.fillMaxWidth())}
@@ -192,7 +204,8 @@ private val Electric=Color(0xFF3984FF)
                     FilledTonalIconButton(onClick={if(active)vm.interruptVoice() else start()},modifier=Modifier.size(58.dp)){Icon(Icons.Outlined.GraphicEq,"উত্তর থামিয়ে কথা বলো")}
                 }
                 if(!active)GradientAction("Voice mode শুরু করো",Icons.Outlined.Mic,start,Modifier.fillMaxWidth())
-                LabelCentered("বলতে থাকলে mic আবার নিজে শুনবে। উত্তর দেওয়ার সময় mic বন্ধ থাকে। মাঝখানে orbit চাপলে নতুন কথা নেওয়া হয়।")
+                LabelCentered("কথা বলে বাধা দিতে পারো। Speech service না ধরলে orbit চাপো।")
+                if(vm.voice.interruptionHint.isNotBlank())LabelCentered(vm.voice.interruptionHint)
                 LabelCentered("${vm.store.text("voiceMinutes","10")} মিনিটে auto end • নীরবতায় auto stop • অ্যাপ background/lock হলে mic বন্ধ")
             }
         }}
@@ -202,6 +215,7 @@ private val Electric=Color(0xFF3984FF)
 @Composable internal fun SimpleSettings(vm:AssistantModel){
     val ctx=LocalContext.current;val revision=vm.revision
     var connect by remember {mutableStateOf(false)};var editing by remember {mutableStateOf<Provider?>(null)}
+    var voiceLink by remember {mutableStateOf(vm.store.text("elevenVoiceId","75CHIF904aWz6uq77J3P"))}
     var key by remember {mutableStateOf(vm.store.secret("preferred-voice"))};var saved by remember {mutableStateOf("")}
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
         Text("Simple. Connected.",fontSize=28.sp,fontWeight=FontWeight.Light);Label("Provider বেছে key দাও। বাকি connection অ্যাপ ঠিক করবে।")
@@ -216,15 +230,17 @@ private val Electric=Color(0xFF3984FF)
         Glass(Modifier.fillMaxWidth()){
             Text("একটি key-তে মূল কাজগুলো",fontWeight=FontWeight.Medium);Spacer(Modifier.height(6.dp));Label("নির্বাচিত AI দিয়ে chat ও actions, আর ফোনের speech/TTS দিয়ে voice চলে। ElevenLabs-এর নির্দিষ্ট কণ্ঠ চাইলে শুধু তার key আলাদা লাগবে। Provider-এর quota/খরচ প্রযোজ্য।")
         }
+        AutomationSetup(vm)
         Glass(Modifier.fillMaxWidth()){
             Text("তোমার কণ্ঠসঙ্গী",fontSize=18.sp,fontWeight=FontWeight.Medium);Spacer(Modifier.height(8.dp))
             Row(verticalAlignment=Alignment.CenterVertically){RadioButton(vm.store.flag("preferredVoice",true),{vm.flag("preferredVoice",true)});Text("তোমার নির্বাচিত ElevenLabs voice",modifier=Modifier.weight(1f),fontSize=13.sp)}
             Row(verticalAlignment=Alignment.CenterVertically){RadioButton(!vm.store.flag("preferredVoice",true),{vm.flag("preferredVoice",false)});Text("ফোনের নারী কণ্ঠ / system fallback",modifier=Modifier.weight(1f),fontSize=13.sp)}
             if(vm.store.flag("preferredVoice",true)){
                 Field(key,{key=it;saved=""},"ElevenLabs key (ঐচ্ছিক)",secret=true)
-                TextButton(onClick={vm.savePreferredVoice(key);saved="পছন্দের voice key সংরক্ষণ হয়েছে।"}){Text("Voice key রাখো")}
+                Field(voiceLink,{voiceLink=it;saved=""},"ElevenLabs voice ID অথবা link")
+                TextButton(onClick={runCatching{vm.savePreferredVoice(key,voiceLink)}.onSuccess{saved="Voice ID ও key সংরক্ষণ হয়েছে।"}.onFailure{saved=it.message.orEmpty()}}){Text("Voice key রাখো")}
                 if(saved.isNotBlank())Label(saved)
-                Label("কণ্ঠ নির্দিষ্ট রাখা হয়েছে। Key না থাকলে বা voice ব্যর্থ হলে ফোনের কণ্ঠ ব্যবহার হবে।")
+                Label("Voice ID/link কণ্ঠ নির্বাচন করে; এটি key নয়। Voice-টি নিজের ElevenLabs library-তে available থাকতে হবে। Key না থাকলে বা ব্যর্থ হলে ফোনের কণ্ঠ চলবে।")
             }
             TextButton(onClick={vm.voice.speak("হ্যালো, আমি বুশরা। এখন তোমার কথা শুনতে প্রস্তুত।",vm.ttsProvider(),true)},enabled=!vm.busy){Icon(Icons.Outlined.VolumeUp,null);Text(" কণ্ঠ শুনে দেখো")}
             if(vm.voice.phase==VoicePhase.ERROR)Text(vm.status,color=MaterialTheme.colorScheme.error,fontSize=12.sp)
@@ -232,10 +248,11 @@ private val Electric=Color(0xFF3984FF)
             Row{FilterChip(vm.store.text("language","bn-BD")=="bn-BD",{vm.setting("language","bn-BD")},label={Text("বাংলা")});Spacer(Modifier.width(10.dp));FilterChip(vm.store.text("language")=="en-US",{vm.setting("language","en-US")},label={Text("English")})}
             Spacer(Modifier.height(5.dp));Label("এক session-এর সর্বোচ্চ সময়")
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){listOf("3","10","30").forEach {min->FilterChip(vm.store.text("voiceMinutes","10")==min,{vm.setting("voiceMinutes",min)},label={Text("$min মিনিট")})}}
-            Label("Mic start/stop, turn-taking, interruption ও silence recovery স্বয়ংক্রিয়। Gemini Live-এর মতো পূর্ণ-duplex audio নয়।")
+            SettingSwitch("কথা বলে উত্তর থামাও",vm.store.flag("handsFreeInterrupt",true)){vm.flag("handsFreeInterrupt",it)}
+            Label("Speaker চলার সময় speech listener echo বাদ দিয়ে নতুন কথা ধরার চেষ্টা করবে। Headset-এ ভালো কাজ করে; ফোনের speech service-এ playback-এর সময় mic না চললে button দিয়ে থামানো যাবে।")
         }
         Glass(Modifier.fillMaxWidth()){
-            Text("Glassy universe",fontSize=18.sp,fontWeight=FontWeight.Medium)
+            Text("CYBER GLASS / HUD",fontSize=18.sp,fontWeight=FontWeight.Medium)
             SettingSwitch("Motion graphics",vm.store.flag("motion",true)){vm.flag("motion",it)}
             SettingSwitch("Light theme",vm.store.flag("light")){vm.flag("light",it)}
             Label("Power saving mode-এ animation কমে যাবে।")
@@ -253,7 +270,7 @@ private val Electric=Color(0xFF3984FF)
             TextButton(onClick={vm.stop()}){Text("সব কাজ ও voice থামাও")}
             TextButton(onClick={ctx.startActivity(Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://github.com/techwithrakibofficial/JARVIS-AI-Android/releases")))}){Text("APK updates")}
         }
-        Label("BUSHRA AI 0.2.0 • Rakib Chowdhury Labs")
+        Label("BUSHRA AI 0.3.0 • Rakib Chowdhury Labs")
     }
     if(connect)ConnectionSheet(vm,editing){connect=false;editing=null}
 }
