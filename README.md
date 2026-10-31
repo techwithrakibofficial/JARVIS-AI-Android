@@ -1,4 +1,4 @@
-# BUSHRA AI 0.2.0
+# BUSHRA AI 0.3.0
 
 Native personal Android voice and action assistant by **Rakib Chowdhury Labs**.
 
@@ -11,14 +11,14 @@ Read [বাংলা phone setup](docs/PHONE_SETUP.md) and follow the acceptanc
 
 ## Included
 
-- Animated cosmic glass dashboard with moving highlights, orbit rings, responsive wave animation, changing typography, dark/light themes and motion control. Low-power mode reduces motion.
+- Animated cyber HUD / liquid-glass dashboard with moving highlights, orbit rings, responsive wave animation, changing typography, dark/light themes and motion control. Low-power mode reduces motion.
 - Simple provider + key setup; endpoint/protocol/model fields removed from the UI. Automatic model discovery and connection test. OpenRouter free-first, OpenAI/ChatGPT, DeepSeek, Gemini, Claude, Groq, Grok and optional private OpenClaw gateway.
 - Foreground voice sessions with listening/thinking/speaking/paused/error states. Stop/interruption, bounded recognizer recovery, on-device language failure fallback (with network consent), TTS-ready queue, automatic next turn and 3/10/30-minute session limits. Mic ends on background/lock; a transient permission dialog no longer triggers onPause shutdown.
-- Preferred fixed ElevenLabs voice `75CHIF904aWz6uq77J3P` with an optional separate key. Device-language female TTS preference and system fallback. Device female/Bangla voice availability is not guaranteed.
-- Existing encrypted keys, aliases, contacts, history/memory and approval-gated phone actions preserved. Dialer/SMS remain drafts with final user confirmation.
+- ElevenLabs voice ID/link selection (default `75CHIF904aWz6uq77J3P`) with an optional separate key. Device-language female TTS preference and system fallback. Device female/Bangla voice availability is not guaranteed.
+- Existing encrypted keys, aliases, contacts and history/memory preserved. Native Bengali/English routing opens common apps without AI credit. Saved phone contacts resolve locally; re-import is optional. One-time opt-in trusted actions and direct SMS/call plus guarded WhatsApp Send; carrier SMS never substitutes for WhatsApp. Tasks records SMS sent callbacks, not delivery.
 - Source ZIP export in Build Studio. Generated code is not run or automatically published.
 
-Voice uses a half-duplex STT > chat > TTS turn flow, not full Gemini Live audio/video parity. One chat API key covers the core flow via phone speech/TTS; a specific ElevenLabs cloud voice still needs its own credentials. Provider quota and installed speech services matter.
+Voice uses an STT > chat > TTS turn flow with experimental playback-time ASR and echo filtering for hands-free interruption, not full Gemini Live audio/video parity. One chat API key covers the core flow via phone speech/TTS; a specific ElevenLabs cloud voice still needs its own credentials. Provider quota and installed speech services matter.
 
 ## Build
 

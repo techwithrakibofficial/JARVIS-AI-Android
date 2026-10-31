@@ -76,12 +76,13 @@ class PhoneAccessibility:AccessibilityService() {
     /** Restricted to the deep-linked WhatsApp composer and exact message; no generic Send guessing. */
     fun sendWhatsAppIfReady(pkg:String,text:String,name:String,phone:String):String? {
         if(pkg !in listOf("com.whatsapp","com.whatsapp.w4b") || currentPackage()!=pkg)return null
-        val all=nodes().filter {it.isVisibleToUser && it.packageName?.toString()==pkg}
-        val headings=all.filter {it.viewIdResourceName in listOf("$pkg:id/conversation_contact_name","$pkg:id/contact_name")}
+        val root=rootInActiveWindow ?: return null
+        fun matching(id:String)=root.findAccessibilityNodeInfosByViewId("$pkg:id/$id").filter{it.isVisibleToUser && it.packageName?.toString()==pkg}
+        val headings=matching("conversation_contact_name")+matching("contact_name")
         if(headings.none { n -> val t=n.text?.toString().orEmpty();normalizedName(t)==normalizedName(name) || (validPhone(t) && whatsappPhone(t)==whatsappPhone(phone)) })return null
-        val composer=all.singleOrNull {it.isEditable && !it.isPassword && it.viewIdResourceName=="$pkg:id/entry"} ?: return null
+        val composer=matching("entry").singleOrNull {it.isEditable && !it.isPassword} ?: return null
         if(composer.text?.toString()!=text)return null
-        val send=all.singleOrNull {it.isEnabled && it.isClickable && it.viewIdResourceName=="$pkg:id/send"} ?: return null
+        val send=matching("send").singleOrNull {it.isEnabled && it.isClickable} ?: return null
         return if(send.performAction(AccessibilityNodeInfo.ACTION_CLICK))"WhatsApp-এর exact message composer যাচাই করে Send চাপা হয়েছে; delivery নিশ্চিত নয়।" else "WhatsApp Send click হয়নি; SMS পাঠানো হয়নি।"
     }
     fun scroll(direction:String):String {

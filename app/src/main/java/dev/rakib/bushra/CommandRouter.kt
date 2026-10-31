@@ -32,6 +32,10 @@ fun routeCommand(input:String):DeviceCommand? {
             if(target.isNotBlank() && body.isNotBlank())return DeviceCommand(if(wa)"whatsapp" else "sms",JSONObject().put("contact",target).put("text",body))
         }
     }
+    val call=Regex("^(?:(?:আচ্ছা|তুমি|প্লিজ)\\s+)*(.+?)(?:\\s+কে|কে)?\\s+(?:কল|ফোন)\\s+(?:করো|কর|দাও)$",RegexOption.IGNORE_CASE).find(text)
+    if(call!=null)return DeviceCommand("call",JSONObject().put("contact",call.groupValues[1].trim()))
+    val callEnglish=Regex("^(?:please )?call (.+)$",RegexOption.IGNORE_CASE).find(text)
+    if(callEnglish!=null)return DeviceCommand("call",JSONObject().put("contact",callEnglish.groupValues[1].trim()))
     val open=Regex("^(?:(?:আচ্ছা|তুমি|প্লিজ|দয়া করে|দয়া করে)\\s+)*(.*?)\\s+(?:ওপেন\\s*(?:করো|কর|করে দাও)|খোলো|খুলে দাও|চালু করো)$",RegexOption.IGNORE_CASE).find(text)
     if(open!=null && open.groupValues[1].isNotBlank())return DeviceCommand("open_app",JSONObject().put("name",open.groupValues[1].trim()))
     val en=Regex("^(?:please )?open (.+)$",RegexOption.IGNORE_CASE).find(text)

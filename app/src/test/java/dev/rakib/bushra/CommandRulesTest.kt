@@ -7,6 +7,7 @@ class CommandRulesTest {
     @Test fun bengaliWhatsAppLaunchUsesKnownPackage(){assertEquals("com.whatsapp",appPackages("হোয়াটসঅ্যাপ").first());assertEquals("com.whatsapp",appPackages("হোয়াটসঅ্যাপ").first())}
     @Test fun simpleOpenByVoiceNeedsNoModel(){assertEquals("open_app",routeCommand("তুমি হোয়াটসঅ্যাপ ওপেন করো")?.tool);assertEquals("WhatsApp",routeCommand("open WhatsApp")?.args?.getString("name"))}
     @Test fun whatsappSmsWordNeverChoosesCarrier(){val c=routeCommand("হোয়াটসঅ্যাপ খুলে রাকিব ব্রো কে হাই লিখে এসএমএস সেন্ড করো")!!;assertEquals("whatsapp",c.tool);assertEquals("রাকিব ব্রো",c.args.getString("contact"));assertEquals("হাই",c.args.getString("text"))}
+    @Test fun callsRouteWithoutCredit(){assertEquals("Rakib Bro",routeCommand("call Rakib Bro")?.args?.getString("contact"));assertEquals("রাকিব ব্রো",routeCommand("রাকিব ব্রো কে কল করো")?.args?.getString("contact"))}
     @Test fun realSmsStillUsesSms(){assertEquals("sms",routeCommand("রাকিব ব্রো কে হাই এসএমএস পাঠাও")?.tool)}
     @Test fun missingMessageDoesNotGuessText(){assertNull(routeCommand("হোয়াটসঅ্যাপ রাকিব ব্রোকে মেসেজ"))}
     @Test fun ambiguousOpenIsLeftToResolution(){assertEquals("Facebook",routeCommand("Facebook ওপেন করো")?.args?.getString("name"))}
