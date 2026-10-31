@@ -93,7 +93,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
           script: |
             chmod +x gradlew
-            ./gradlew --no-daemon :app:connectedDebugAndroidTest
+            ./gradlew --no-daemon -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true :app:connectedDebugAndroidTest
             mkdir -p ui-captures
             adb exec-out run-as dev.rakib.bushra tar -C files/ui-captures -cf - . > ui-captures/screens.tar
             tar -xf ui-captures/screens.tar -C ui-captures
