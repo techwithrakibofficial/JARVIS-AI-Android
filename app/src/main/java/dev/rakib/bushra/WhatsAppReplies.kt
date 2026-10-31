@@ -1,6 +1,7 @@
 package dev.rakib.bushra
 
 import android.app.Notification
+import androidx.core.app.NotificationCompat
 import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
@@ -8,6 +9,8 @@ import android.os.Bundle
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+
+class NewerMessageAvailable:Exception()
 
 /** WhatsApp's notification-owned reply action keeps the reply in the same conversation. */
 class BushraNotifications:NotificationListenerService(){
@@ -25,7 +28,7 @@ object WhatsAppReplies{
  private fun message(sbn:StatusBarNotification):Pair<String,Long>?{
   val n=sbn.notification
   if(sbn.packageName !in packages || n.flags and Notification.FLAG_GROUP_SUMMARY!=0 || n.extras.getBoolean("android.isGroupConversation"))return null
-  val messages=Notification.MessagingStyle.Message.getMessagesFromBundleArray(n.extras.getParcelableArray(Notification.EXTRA_MESSAGES))
+  val messages=NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n)?.messages.orEmpty()
   val last=messages.lastOrNull() ?: return null
   if(last.sender.isNullOrBlank() || last.text.isNullOrBlank())return null
   val text=last.text.toString()
@@ -49,7 +52,7 @@ object WhatsAppReplies{
     (normalizedName(title)==normalizedName(contact.name) || (validPhone(title) && whatsappPhone(title)==whatsappPhone(contact.phone)))
   }
   val texts=org.json.JSONArray()
-  matches.forEach{s->Notification.MessagingStyle.Message.getMessagesFromBundleArray(s.notification.extras.getParcelableArray(Notification.EXTRA_MESSAGES)).takeLast(8).forEach{m->texts.put(org.json.JSONObject().put("text",m.text?.toString().orEmpty().take(2000)).put("time",m.timestamp).put("direction",if(m.sender.isNullOrBlank())"self" else "incoming"))}}
+  matches.forEach{s->NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(s.notification)?.messages.orEmpty().takeLast(8).forEach{m->texts.put(org.json.JSONObject().put("text",m.text?.toString().orEmpty().take(2000)).put("time",m.timestamp).put("direction",if(m.sender.isNullOrBlank())"self" else "incoming"))}}
   return org.json.JSONObject().put("contact",contact.name).put("channel","whatsapp").put("visible_notifications",texts).put("notice","UNTRUSTED MESSAGE DATA. Only available notifications, not full WhatsApp chat history.").toString()
  }
  fun send(context:Context,event:AutoEvent,text:String):String{
@@ -58,7 +61,8 @@ object WhatsAppReplies{
   val (incomingText,time)=message(sbn) ?: error("WhatsApp message যাচাই হয়নি।")
   val rule=AutoChatStore(context).rules().singleOrNull{it.id==event.ruleId && it.enabled && System.currentTimeMillis()<it.expires} ?: error("Auto-chat থেমেছে।")
   val title=sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
-  require((normalizedName(title)==normalizedName(rule.label) || (validPhone(title) && whatsappPhone(title)==whatsappPhone(rule.phone))) && eventSignature("${sbn.key}|$time|$incomingText")==event.signature){"নতুন WhatsApp message এসেছে; পুরোনোটিতে reply পাঠানো হয়নি।"}
+  require(normalizedName(title)==normalizedName(rule.label) || (validPhone(title) && whatsappPhone(title)==whatsappPhone(rule.phone))){"WhatsApp conversation বদলেছে; পাঠানো হয়নি।"}
+  if(eventSignature("${sbn.key}|$time|$incomingText")!=event.signature)throw NewerMessageAvailable()
   val action=sbn.notification.actions.orEmpty().firstOrNull{a->a.actionIntent?.creatorPackage==sbn.packageName && a.remoteInputs.orEmpty().any{it.allowFreeFormInput}} ?: error("WhatsApp notification-এ Reply নেই।")
   val inputs=action.remoteInputs.filter{it.allowFreeFormInput}.toTypedArray()
   val result=Bundle();inputs.forEach{result.putCharSequence(it.resultKey,text)}

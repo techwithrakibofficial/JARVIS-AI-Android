@@ -16,7 +16,7 @@ class AutoChatStore(context:Context){
  fun addEvent(event:AutoEvent):Boolean=synchronized(lock){
   val rule=rules().firstOrNull{it.id==event.ruleId} ?: return@synchronized false
   if(!autoRuleAllows(rule,event.channel,event.phone,event.time,System.currentTimeMillis()) || events().any{it.signature==event.signature})return@synchronized false
-  put("events",(events()+event).takeLast(100).map{it.json()});true
+  put("events",(events()+event.copy(text=event.text.take(2000))).takeLast(100).map{it.json()});true
  }
  fun state(id:String,state:String)=synchronized(lock){put("events",events().map{if(it.id==id)it.copy(state=state).json() else it.json()})}
  /** Reserve before external sending. A killed worker is never allowed to resend this event. */
@@ -34,5 +34,5 @@ class AutoChatStore(context:Context){
  fun thread(ruleId:String):List<ChatLine> = synchronized(lock){
   val a=array("thread_$ruleId");(0 until a.length()).map{val j=a.getJSONObject(it);ChatLine(j.getString("who"),j.getString("text"))}
  }
- fun append(ruleId:String,who:String,text:String)=synchronized(lock){put("thread_$ruleId",(thread(ruleId)+ChatLine(who,text)).takeLast(16).map{it.json()})}
+ fun append(ruleId:String,who:String,text:String)=synchronized(lock){put("thread_$ruleId",(thread(ruleId)+ChatLine(who,text.take(2000))).takeLast(16).map{it.json()})}
 }
