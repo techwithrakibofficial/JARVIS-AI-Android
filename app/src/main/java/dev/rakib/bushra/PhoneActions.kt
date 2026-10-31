@@ -84,7 +84,7 @@ class PhoneActions(private val context:Context,private val store:LocalStore) {
                 if(store.flag("directMessaging")){
                     require(granted(Manifest.permission.SEND_SMS)){"একবারে setup থেকে SMS permission দাও।"}
                     val sub=SubscriptionManager.getDefaultSmsSubscriptionId()
-                    require(SubscriptionManager.isValidSubscriptionId(sub)){"ফোনের SIM settings-এ default SMS SIM বেছে নাও; কোন SIM থেকে পাঠাব তা আন্দাজ করব না।"}
+                    require(validSmsSubscription(sub)){"ফোনের SIM settings-এ default SMS SIM বেছে নাও; কোন SIM থেকে পাঠাব তা আন্দাজ করব না।"}
                     val manager=if(Build.VERSION.SDK_INT>=31)context.getSystemService(SmsManager::class.java).createForSubscriptionId(sub) else SmsManager.getSmsManagerForSubscriptionId(sub)
                     val parts=manager.divideMessage(body)
                     val sent=ArrayList<PendingIntent>();parts.forEachIndexed { index,_ ->

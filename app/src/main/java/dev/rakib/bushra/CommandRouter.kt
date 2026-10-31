@@ -4,6 +4,7 @@ import java.net.URI
 import org.json.JSONObject
 
 data class DeviceCommand(val tool:String,val args:JSONObject)
+fun validSmsSubscription(id:Int)=id>=0 && id!=Int.MAX_VALUE
 fun whatsappMention(text:String)=Regex("whats\\s*app|হো[য়য়]া?টস?অ?্যা?প|হোয়াটসঅ্যাপ|হোয়াটসঅ্যাপ|ওয়াটসঅ্যাপ|ওয়াটসঅ্যাপ",RegexOption.IGNORE_CASE).containsMatchIn(text)
 fun appPackages(name:String):List<String> {
     val n=normalizedName(name).replace(" ","")

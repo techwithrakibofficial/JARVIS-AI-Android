@@ -36,7 +36,7 @@ import androidx.core.content.ContextCompat
         SettingSwitch("আমার নির্দেশে screen actions",vm.store.flag("trustedActions")){vm.flag("trustedActions",it)}
         SettingSwitch("Direct SMS / call / WhatsApp Send",vm.store.flag("directMessaging")){vm.flag("directMessaging",it)}
         Label("App খোলা ও Back/Home-এ app confirmation লাগে না। একই নামের একাধিক contact থাকলে নম্বর নির্দিষ্ট করতে হবে।")
-        val smsReady=SubscriptionManager.isValidSubscriptionId(SubscriptionManager.getDefaultSmsSubscriptionId())
+        val smsReady=validSmsSubscription(SubscriptionManager.getDefaultSmsSubscriptionId())
         Label(if(smsReady)"✓ Default SMS SIM নির্ধারিত" else "○ ফোনের SIM settings-এ default SMS SIM বেছে নাও")
         Label(if(PhoneAccessibility.instance!=null)"✓ Screen control connected" else "○ Screen control বন্ধ")
         OutlinedButton(onClick={ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))},modifier=Modifier.fillMaxWidth()){Text("Accessibility / screen control setup")}
